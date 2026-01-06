@@ -10,6 +10,9 @@ namespace OmegaSudoku
     {
         static void Main(string[] args)
         {
+            Console.WriteLine("Welcome to Omega Sudoku!");
+            SquareCell sc = new SquareCell(3,5);
+            Console.WriteLine("Created a SquareCell at: " + sc);
         }
     }
 }
