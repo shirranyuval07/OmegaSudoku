@@ -11,8 +11,9 @@ namespace OmegaSudoku
         static void Main(string[] args)
         {
             Console.WriteLine("Welcome to Omega Sudoku!");
-            SquareCell sc = new SquareCell(3,5);
-            Console.WriteLine("Created a SquareCell at: " + sc);
+            SudokuBoard board = new SudokuBoard("800000070006010053040600000000080400003000700020005038000000800004050061900002000");
+            board.printBoard();
         }
+
     }
 }

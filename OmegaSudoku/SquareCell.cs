@@ -10,10 +10,16 @@ namespace OmegaSudoku
     {
         private int row { get; set; }
         private int col { get; set; }
-        public SquareCell(int row, int col)
+
+        private List<int> possibleValues;
+
+        private int value { get; set; }
+        public SquareCell(int row, int col, int value)
         {
             this.row = row;
             this.col = col;
+            this.value = value;
+            this.possibleValues = new List<int>();
         }
         public int Row
         {
@@ -25,9 +31,18 @@ namespace OmegaSudoku
             get { return col; }
             set { col = value; }
         }
+        public int Value
+        {
+            get { return value; }
+            set { this.value = value; }
+        }
         public override string ToString()
         {
-            return "(" + row + "," + col + ")";
+            return "(" + row + "," + col + ")" +" And its value is: "+value;
+        }
+        public bool Failed()
+        {
+            return possibleValues.Count == 0;
         }
     }
 }
