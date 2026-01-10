@@ -31,8 +31,45 @@ namespace OmegaSudoku
                 for (int col = 0; col < this.boardLen; col++)
                     this.board[row, col] = new SquareCell(row, col, board[row* this.boardLen + col] - '0');
             AddPreExistingNumbers();
-            
+            InitializePossibleValues();
+            SolveBoard();
+        }
 
+        private bool CheckRow(int row, int value)
+        {
+            return this.rowUsed[row, value];
+        }
+        private bool CheckCol(int col, int value)
+        {
+            return this.colUsed[col, value];
+        }
+        private bool CheckBox(int row, int col, int value)
+        {
+            return this.boxUsed[(row / boxLen) * boxLen + (col / boxLen), value];
+        }
+
+
+
+        private void InitializePossibleValues()
+        {
+            for (int row = 0; row < this.boardLen; row++)
+            {
+                for (int col = 0; col < this.boardLen; col++)
+                {
+                    if (this.board[row,col].Value == 0)
+                    {
+                        List<int> possibleValues = new List<int>();
+                        for (int d = 1; d <= this.boardLen; d++)
+                        {
+                            if (IsValidPlace(row, col, d))
+                            {
+                                possibleValues.Add(d);
+                            }
+                        }
+                        this.board[row, col].SetPossibleValues(possibleValues);
+                    }
+                }
+            }
         }
         private bool IsValidPlace(int row, int col, int value)
         {
@@ -76,6 +113,27 @@ namespace OmegaSudoku
             }
         }
 
+        private void SolveBoard()
+        {
+            // Implementation of a backtracking algorithm to solve the Sudoku board
+            FillNakedSingles();
+            //SolveHiddenSingles();
+
+        }
+
+        private bool CanPlace(int row, int col, int value)
+        {
+            return !rowUsed[row, value]
+                && !colUsed[col, value]
+                && !boxUsed[(row / boxLen) * boxLen + (col / boxLen), value];
+        }
+
+
+        private void FillNakedSingles()
+        {
+            // Iterate through all cells and fill in naked singles
+        }
+
         public void PrintBoard()
         {
             Console.WriteLine();
@@ -87,22 +145,6 @@ namespace OmegaSudoku
                 Console.WriteLine("------------------");
             }
         }
-
-        private bool CheckRow(int row,int value)
-        {
-            return this.rowUsed[row,value];
-        }
-        private bool CheckCol(int col, int value)
-        {
-            return this.colUsed[col, value];
-        }
-        private bool CheckBox(int row,int col, int value)
-        {
-            return this.boxUsed[(row / boxLen) * boxLen + (col / boxLen), value];
-        }
-
-
-
 
 
 

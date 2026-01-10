@@ -21,6 +21,14 @@ namespace OmegaSudoku
             this.value = value;
             this.possibleValues = new List<int>();
         }
+        public void SetPossibleValues(List<int> values)
+        {
+            this.possibleValues = values;
+        }
+        public List<int> GetPossibleValues()
+        {
+            return this.possibleValues;
+        }
         public int Row
         {
             get { return row; }
