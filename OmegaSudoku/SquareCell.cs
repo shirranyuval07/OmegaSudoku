@@ -25,10 +25,12 @@ namespace OmegaSudoku
         {
             this.possibleValues = values;
         }
-        public List<int> GetPossibleValues()
+        public List<int> PossibleValues
         {
-            return this.possibleValues;
+            get { return possibleValues; }
+            set { possibleValues = value; }
         }
+        
         public int Row
         {
             get { return row; }

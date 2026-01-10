@@ -11,8 +11,15 @@ namespace OmegaSudoku
         static void Main(string[] args)
         {
             Console.WriteLine("Welcome to Omega Sudoku!");
-            SudokuBoard board = new SudokuBoard("023456789400000000500000000600000000700000000800000000900000000100000000300000000\r\n\r\n\r\n");
-            board.PrintBoard();
+            try
+            {
+                SudokuBoard board = new SudokuBoard("530070000600195000098000060800060003400803001700020006060000280000419005000080079\r\n\r\n\r\n\r\n");
+                board.PrintBoard();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred: " + ex.Message);
+            }
 
         }
 

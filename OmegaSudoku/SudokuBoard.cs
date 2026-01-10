@@ -31,8 +31,14 @@ namespace OmegaSudoku
                 for (int col = 0; col < this.boardLen; col++)
                     this.board[row, col] = new SquareCell(row, col, board[row* this.boardLen + col] - '0');
             AddPreExistingNumbers();
+            PrintBoard();
+            Console.WriteLine("Board After Solving: ");
             InitializePossibleValues();
             SolveBoard();
+            if(!IsValidBoard())
+            {
+                throw new Exception("The provided board is not valid.");
+            }
         }
 
         private bool CheckRow(int row, int value)
@@ -71,11 +77,30 @@ namespace OmegaSudoku
                 }
             }
         }
+        private bool IsValidBoard()
+        {
+            // Check if the board is valid
+            for (int row = 0; row < this.boardLen; row++)
+            {
+                for (int col = 0; col < this.boardLen; col++)
+                {
+                    int value = this.board[row, col].Value;
+                    if (value == 0)
+                    {
+                        if (!IsValidPlace(row, col, value))
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
         private bool IsValidPlace(int row, int col, int value)
         {
-            if (!this.rowUsed[row,value] && !this.colUsed[col,value] && !this.boxUsed[(row / boxLen) * boxLen + (col / boxLen),value])
-                return true;
-            return false;
+            return !rowUsed[row, value]
+                && !colUsed[col, value]
+                && !boxUsed[(row / boxLen) * boxLen + (col / boxLen), value];
         }
 
         private void PlaceNumber(int row, int col, int value)
@@ -117,21 +142,90 @@ namespace OmegaSudoku
         {
             // Implementation of a backtracking algorithm to solve the Sudoku board
             FillNakedSingles();
-            //SolveHiddenSingles();
+            SolveHiddenSingles();
 
         }
 
-        private bool CanPlace(int row, int col, int value)
+        /*“Check everywhere this value could go. 
+         * If it fits anywhere else → not hidden. 
+         * If it fits nowhere else → hidden single.”*/
+        private bool IsHiddenSingle(int row, int col, int value)
         {
-            return !rowUsed[row, value]
-                && !colUsed[col, value]
-                && !boxUsed[(row / boxLen) * boxLen + (col / boxLen), value];
+            // Check if the value is a hidden single in its row
+            for (int c = 0; c < this.boardLen; c++)
+            {
+                if (c != col && this.board[row, c].Value == 0 && this.board[row, c].PossibleValues.Contains(value))
+                    return false;
+            }
+            // Check if the value is a hidden single in its column
+            for (int r = 0; r < this.boardLen; r++)
+            {
+                if (r != row && this.board[r, col].Value == 0 && this.board[r, col].PossibleValues.Contains(value))
+                    return false;
+            }
+            // Check if the value is a hidden single in its box
+            int boxRowStart = (row / boxLen) * boxLen;
+            int boxColStart = (col / boxLen) * boxLen;
+            for (int r = boxRowStart; r < boxRowStart + boxLen; r++)
+            {
+                for (int c = boxColStart; c < boxColStart + boxLen; c++)
+                {
+                    if ((r != row || c != col) && this.board[r, c].Value == 0 && this.board[r, c].PossibleValues.Contains(value))
+                        return false;
+                }
+            }
+            return true;
         }
 
+        private void SolveHiddenSingles()
+        {
+            // Iterate through all cells and fill in hidden singles
+            bool progressMade = true;
+            while(progressMade)
+            {
+                progressMade = false;
+                for (int row = 0; row < this.boardLen; row++)
+                {
+                    for (int col = 0; col < this.boardLen; col++)
+                    {
+                        if (this.board[row, col].Value == 0)
+                        {
+                            List<int> possibleValues = this.board[row, col].PossibleValues;
+                            foreach (int value in possibleValues)
+                            {
+                                if (IsHiddenSingle(row, col, value))
+                                {
+                                    PlaceNumber(row, col, value);
+                                    progressMade = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         private void FillNakedSingles()
         {
             // Iterate through all cells and fill in naked singles
+            bool progressMade = true;
+            while(progressMade)
+            {
+                progressMade = false;
+                for (int row = 0; row < this.boardLen; row++)
+                {
+                    for (int col = 0; col < this.boardLen; col++)
+                    {
+                        if (this.board[row, col].Value == 0 && this.board[row, col].PossibleValues.Count == 1)
+                        {
+                            int value = this.board[row, col].PossibleValues[0];
+                            PlaceNumber(row, col, value);
+                            progressMade = true;
+                        }
+                    }
+                }
+            }
         }
 
         public void PrintBoard()
