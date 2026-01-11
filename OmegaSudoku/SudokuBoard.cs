@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Policy;
 
 namespace OmegaSudoku
 {
@@ -16,6 +17,7 @@ namespace OmegaSudoku
         private HashSet<int>[] boxUsed;
 
         private HashSet<SquareCell> emptyCells;
+        public int emptyCellsCount;
 
 
         Dictionary<int, int>[] rowCandidateCount;
@@ -38,28 +40,46 @@ namespace OmegaSudoku
                 boxUsed[i] = new HashSet<int>();
             }
 
+            this.emptyCells = new HashSet<SquareCell>();
+
+            this.rowCandidateCount = new Dictionary<int, int>[boardLen];
+            this.colCandidateCount = new Dictionary<int, int>[boardLen];
+            this.boxCandidateCount = new Dictionary<int, int>[boardLen];
 
             board = new SquareCell[boardLen, boardLen];
 
             for (int row = 0; row < boardLen; row++)
             {
+                this.rowCandidateCount[row] = new Dictionary<int, int>();
+                this.colCandidateCount[row] = new Dictionary<int, int>();
+                this.boxCandidateCount[row] = new Dictionary<int, int>();
+                for (int d = 1; d <= boardLen; d++)
+                {
+                    rowCandidateCount[row][d] = 0;
+                    colCandidateCount[row][d] = 0;
+                    boxCandidateCount[row][d] = 0;
+                }
+
                 for (int col = 0; col < boardLen; col++)
                 {
                     int value = boardString[row * boardLen + col] - '0';
-                    board[row, col] =
-                        new SquareCell(row, col, value);
+                    board[row, col] = new SquareCell(row, col, value);
                     if (value == 0)
                         emptyCells.Add(board[row, col]);
                 }
+
+
             }
 
             AddPreExistingNumbers();
             InitializePossibleValues();
 
+            this.emptyCellsCount = emptyCells.Count;
             if (!IsValidBoard())
                 throw new Exception("The provided board is not valid.");
         }
 
+        public int GetBoardLen() { return this.boardLen; }
         private int BoxIndex(int row, int col)
         {
             return (row / boxLen) * boxLen + (col / boxLen);
@@ -93,6 +113,8 @@ namespace OmegaSudoku
 
         public void InitializePossibleValues()
         {
+            ResetCandidateCounts();
+
             for (int row = 0; row < boardLen; row++)
             {
                 for (int col = 0; col < boardLen; col++)
@@ -115,6 +137,19 @@ namespace OmegaSudoku
                 }
             }
         }
+        private void ResetCandidateCounts()
+        {
+            for (int i = 0; i < boardLen; i++)
+            {
+                for (int d = 1; d <= boardLen; d++)
+                {
+                    rowCandidateCount[i][d] = 0;
+                    colCandidateCount[i][d] = 0;
+                    boxCandidateCount[i][d] = 0;
+                }
+            }
+        }
+
 
         private bool IsValidBoard()
         {
@@ -135,21 +170,21 @@ namespace OmegaSudoku
             if (!IsValidPlace(row, col, value))
                 return false;
 
+
             rowUsed[row].Add(value);
             colUsed[col].Add(value);
             boxUsed[BoxIndex(row, col)].Add(value);
 
+            board[row, col].Value = value;
+            emptyCells.Remove(board[row, col]);
 
-            board[row, col] = new SquareCell(row, col, value);
+            InitializePossibleValues();
 
-
-            rowCandidateCount[row][value]--;
-            colCandidateCount[col][value]--;
-            boxCandidateCount[BoxIndex(row, col)][value]--;
 
 
             return true;
         }
+
 
 
         public void PrintBoard()
@@ -157,8 +192,16 @@ namespace OmegaSudoku
             Console.WriteLine();
             for (int row = 0; row < boardLen; row++)
             {
+                if (row % boxLen == 0 && row != 0)
+                    Console.WriteLine(new string('-',(boxLen * boardLen) -3)); // -3 bc of the Console.Write(" | "); (size is 3)
+
                 for (int col = 0; col < boardLen; col++)
-                    Console.Write(board[row, col].Value + "|");
+                {
+                    if (col % boxLen == 0 && col != 0)
+                        Console.Write(" | ");
+
+                    Console.Write(board[row, col].Value + " ");
+                }
                 Console.WriteLine();
             }
         }
@@ -196,7 +239,7 @@ namespace OmegaSudoku
             return true;
         }
 
-        private void SolveHiddenSingles()
+        public void SolveHiddenSingles()
         {
             // Iterate through all cells and fill in hidden singles
             bool progressMade = true;
@@ -225,7 +268,7 @@ namespace OmegaSudoku
             }
         }
 
-        private void FillNakedSingles()
+        public void FillNakedSingles()
         {
             // Iterate through all cells and fill in naked singles
             bool progressMade = true;
@@ -246,5 +289,6 @@ namespace OmegaSudoku
                 }
             }
         }
+
     }
 }

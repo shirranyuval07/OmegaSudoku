@@ -13,9 +13,11 @@ namespace OmegaSudoku
             Console.WriteLine("Welcome to Omega Sudoku!");
             try
             {
-                SudokuBoard board = new SudokuBoard("800000070006010053040600000000080400003000700020005038000000800004050061900002000\r\n\r\n\r\n\r\n");
+                SudokuBoard board = new SudokuBoard("530070000600195000098000060800060003400803001700020006060000280000419005000080079\r\n\r\n\r\n\r\n");
                 board.PrintBoard();
-                Solver.BackTrack(board);
+                Solver.Solve(board);
+                Console.WriteLine("after Solving: ");
+                board.PrintBoard();
             }
             catch (Exception ex)
             {
