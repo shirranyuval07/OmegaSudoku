@@ -6,11 +6,8 @@ using System.Threading.Tasks;
 
 namespace OmegaSudoku
 {
-    class Constants
+    class ConstraintPropagations
     {
-
-
-        
 
     }
 }

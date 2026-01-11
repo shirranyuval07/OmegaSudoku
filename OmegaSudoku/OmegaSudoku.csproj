@@ -44,8 +44,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Constants.cs" />
+    <Compile Include="ConstraintPropagations.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Solver.cs" />
     <Compile Include="SquareCell.cs" />
     <Compile Include="SudokuBoard.cs" />
   </ItemGroup>
