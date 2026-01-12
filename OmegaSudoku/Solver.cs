@@ -16,6 +16,7 @@ namespace OmegaSudoku
             SquareCell emptyCell = board.GetFirstEmptyCell();
             if (!emptyCell.PossibleValues.Any())
                 return false;
+
             foreach(int value in emptyCell.PossibleValues)
             {
                 if(board.IsHiddenSingle(emptyCell.Row,emptyCell.Col,value))
