@@ -13,7 +13,7 @@ namespace OmegaSudoku
             if(board == null) return false;
             if(!board.HasEmptyCells) return true;
             
-            SquareCell emptyCell = board.GetFirstEmptyCell();
+            SquareCell emptyCell = board.GetFirstEmptyCellWithFewestPossibilities();
             if (!emptyCell.PossibleValues.Any())
                 return false;
 

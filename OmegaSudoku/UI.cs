@@ -20,9 +20,7 @@ namespace OmegaSudoku
             try
             {
 
-                // Simulate some work
-                Thread.Sleep(1000);
-                SudokuBoard board = new SudokuBoard("800000070006010053040600000000080400003000700020005038000000800004050061900002000");
+                SudokuBoard board = new SudokuBoard("000000000000003085001020000000507000004000100090000000500000073002010000000040009\r\n");
                 board.PrintBoard();
                 Solver.Solve(board);
                 Console.WriteLine("after Solving: ");

@@ -162,9 +162,15 @@ namespace OmegaSudoku
             }
         }
 
-        public SquareCell GetFirstEmptyCell()
+        public SquareCell GetFirstEmptyCellWithFewestPossibilities()
         {
-            return this.emptyCells.First();
+            SquareCell sc = this.emptyCells.First();
+            foreach(SquareCell cell in emptyCells)
+            {
+                if(cell.PossibleValues.Count() < sc.PossibleValues.Count())
+                    sc = cell;
+            }
+            return sc;
         }
 
         private bool IsValidBoard()
