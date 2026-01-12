@@ -50,6 +50,7 @@
     <Compile Include="Solver.cs" />
     <Compile Include="SquareCell.cs" />
     <Compile Include="SudokuBoard.cs" />
+    <Compile Include="UI.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
