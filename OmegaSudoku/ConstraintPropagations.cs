@@ -8,6 +8,6 @@ namespace OmegaSudoku
 {
     class ConstraintPropagations
     {
-
+        
     }
 }

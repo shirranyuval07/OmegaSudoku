@@ -11,26 +11,26 @@ namespace OmegaSudoku
         private int row { get; set; }
         private int col { get; set; }
 
-        private HashSet<int> possibleValues;
+        private HashSet<char> possibleValues;
 
-        private int value { get; set; }
-        public SquareCell(int row, int col, int value)
+        private char value { get; set; }
+        public SquareCell(int row, int col, char value)
         {
             this.row = row;
             this.col = col;
             this.value = value;
-            this.possibleValues = new HashSet<int>();
+            this.possibleValues = new HashSet<char>();
         }
-        public void SetPossibleValues(HashSet<int> values)
+        public void SetPossibleValues(HashSet<char> values)
         {
             this.possibleValues = values;
         }
 
-        public void RemovePossibleValue(int val)
+        public void RemovePossibleValue(char val)
         {
             this.possibleValues.Remove(val);
         }
-        public HashSet<int> PossibleValues
+        public HashSet<char> PossibleValues
         {
             get { return possibleValues; }
         }
@@ -45,7 +45,7 @@ namespace OmegaSudoku
             get { return col; }
             set { col = value; }
         }
-        public int Value
+        public char Value
         {
             get { return value; }
             set { this.value = value; }

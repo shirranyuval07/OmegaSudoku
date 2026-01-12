@@ -12,37 +12,45 @@ namespace OmegaSudoku
     {
         public static void StartSudokuSolver()
         {
-            Console.WriteLine("Welcome to Omega Sudoku!");
+            Console.WriteLine("Welcome to Omega Sudoku! \n enter HALAS to stop");
             Stopwatch stopwatch = Stopwatch.StartNew();
-
-
-
-            try
+            while(true)
             {
+                Console.WriteLine("give sudoku board");
 
-                SudokuBoard board = new SudokuBoard("000000000000003085001020000000507000004000100090000000500000073002010000000040009\r\n");
-                board.PrintBoard();
-                Solver.Solve(board);
-                Console.WriteLine("after Solving: ");
-                board.PrintBoard();
+                string input = Console.ReadLine();
+                if (input == "HALAS")
+                    break;
+                Console.WriteLine(input.Length);
+               /* try
+                {
 
-                
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("An error occurred: " + ex.Message);
-            }
-            finally
-            {
-                // 2. Stop the stopwatch
-                stopwatch.Stop();
+                    SudokuBoard board = new SudokuBoard(input);
+                    board.PrintBoard();
+                    Solver.Solve(board);
+                    Console.WriteLine("after Solving: ");
+                    board.PrintBoard();
 
-                // 3. Get elapsed time
-                TimeSpan ts = stopwatch.Elapsed;
-                string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds / 10);
-                Console.WriteLine("RunTime: " + elapsedTime);
-                Console.WriteLine("Thank you for using Omega Sudoku Solver!");
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("An error occurred: " + ex.Message);
+                }
+                finally
+                {
+                    // 2. Stop the stopwatch
+                    stopwatch.Stop();
+
+                    // 3. Get elapsed time
+                    TimeSpan ts = stopwatch.Elapsed;
+                    string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}", ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds / 10);
+                    Console.WriteLine("RunTime: " + elapsedTime);
+                    Console.WriteLine("Thank you for using Omega Sudoku Solver!");
+                }*/
             }
+
+
         }
     }
 }

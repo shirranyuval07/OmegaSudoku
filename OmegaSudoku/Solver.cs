@@ -17,9 +17,9 @@ namespace OmegaSudoku
             if (!emptyCell.PossibleValues.Any())
                 return false;
 
-            foreach(int value in emptyCell.PossibleValues)
+            foreach(char value in emptyCell.PossibleValues)
             {
-                if(board.IsHiddenSingle(emptyCell.Row,emptyCell.Col,value))
+                if(board.IsHiddenSingle(emptyCell.Row,emptyCell.Col,value) || board.ISNakedSingle(emptyCell.Row,emptyCell.Col,value))
                 {
                     board.PlaceNumber(emptyCell.Row,emptyCell.Col,value);
                     if (Solve(board))
