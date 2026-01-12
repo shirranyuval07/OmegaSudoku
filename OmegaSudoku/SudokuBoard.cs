@@ -17,9 +17,21 @@ namespace OmegaSudoku
         private HashSet<int>[] boxUsed;
 
         private HashSet<SquareCell> emptyCells;
-        public int emptyCellsCount;
+        public bool HasEmptyCells => emptyCells.Count > 0;
 
 
+        public HashSet<int>[] RowUsed
+        {
+            get { return rowUsed; }
+        }
+        public HashSet<int>[] ColUsed
+        {
+            get { return colUsed; }
+        }
+        public HashSet<int>[] BoxUsed
+        {
+            get { return boxUsed; }
+        }
         Dictionary<int, int>[] rowCandidateCount;
         Dictionary<int, int>[] colCandidateCount;
         Dictionary<int, int>[] boxCandidateCount;
@@ -74,12 +86,12 @@ namespace OmegaSudoku
             AddPreExistingNumbers();
             InitializePossibleValues();
 
-            this.emptyCellsCount = emptyCells.Count;
             if (!IsValidBoard())
                 throw new Exception("The provided board is not valid.");
         }
 
         public int GetBoardLen() { return this.boardLen; }
+        public HashSet<SquareCell> GetEmptyCells() { return this.emptyCells; }
         private int BoxIndex(int row, int col)
         {
             return (row / boxLen) * boxLen + (col / boxLen);
@@ -150,6 +162,10 @@ namespace OmegaSudoku
             }
         }
 
+        public SquareCell GetFirstEmptyCell()
+        {
+            return this.emptyCells.First();
+        }
 
         private bool IsValidBoard()
         {
@@ -185,6 +201,19 @@ namespace OmegaSudoku
             return true;
         }
 
+        public void RemoveNumber(int row,int col)
+        {
+            int value = board[row, col].Value;
+            rowUsed[row].Remove(value);
+            colUsed[col].Remove(value);
+            boxUsed[BoxIndex(row, col)].Remove(value);
+
+            board[row, col].Value = 0;
+            emptyCells.Add(board[row, col]);
+
+            InitializePossibleValues();
+        }
+
 
 
         public void PrintBoard()
@@ -211,7 +240,7 @@ namespace OmegaSudoku
         /*“Check everywhere this value could go. 
          * If it fits anywhere else → not hidden. 
          * If it fits nowhere else → hidden single.”*/
-        private bool IsHiddenSingle(int row, int col, int value)
+        public bool IsHiddenSingle(int row, int col, int value)
         {
             // Check if the value is a hidden single in its row
             for (int c = 0; c < this.boardLen; c++)
@@ -289,6 +318,8 @@ namespace OmegaSudoku
                 }
             }
         }
+
+        
 
     }
 }

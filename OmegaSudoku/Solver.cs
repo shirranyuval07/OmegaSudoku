@@ -8,21 +8,34 @@ namespace OmegaSudoku
 {
     static class Solver
     {
-        public static void Solve(SudokuBoard board)
+        public static bool Solve(SudokuBoard board)
         {
-            if(board == null) return;
-            if(board.emptyCellsCount == 0) return;
-            int len = board.GetBoardLen();
-            for (int row = 0; row < len; row++)
+            if(board == null) return false;
+            if(!board.HasEmptyCells) return true;
+            
+            SquareCell emptyCell = board.GetFirstEmptyCell();
+            if (!emptyCell.PossibleValues.Any())
+                return false;
+            foreach(int value in emptyCell.PossibleValues)
             {
-                for (int col = 0; col < len; col++)
+                if(board.IsHiddenSingle(emptyCell.Row,emptyCell.Col,value))
                 {
-                    board.FillNakedSingles();
-                    board.SolveHiddenSingles();
-                    
-
+                    board.PlaceNumber(emptyCell.Row,emptyCell.Col,value);
+                    if (Solve(board))
+                        return true;
+                    board.RemoveNumber(emptyCell.Row,emptyCell.Col);
+                    return false;
                 }
+                board.PlaceNumber(emptyCell.Row,emptyCell.Col,value);
+                //board.FillNakedSingles();
+                if (Solve(board))
+                    return true;
+                board.RemoveNumber(emptyCell.Row,emptyCell.Col);
             }
+            return false;
+
+
+            
 
         }
     }
