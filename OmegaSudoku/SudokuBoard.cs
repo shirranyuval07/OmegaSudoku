@@ -109,7 +109,6 @@ namespace OmegaSudoku
 
         public void InitializePossibleValues()
         {
-            //ResetCandidateCounts();
 
             for (int row = 0; row < Constants.boardLen; row++)
             {
@@ -130,18 +129,6 @@ namespace OmegaSudoku
                 }
             }
         }
-       /* private void ResetCandidateCounts()
-        {
-            for (int i = 0; i < Constants.boardLen; i++)
-            {
-                for (char d = '1'; d <= Constants.boardLen; d++)
-                {
-                    rowCandidateCount[i][d] = '0';
-                    colCandidateCount[i][d] = '0';
-                    boxCandidateCount[i][d] = '0';
-                }
-            }
-        }*/
 
         public SquareCell GetFirstEmptyCellWithFewestPossibilities()
         {
@@ -222,44 +209,76 @@ namespace OmegaSudoku
             }
         }
 
-
+        public void FillAllSingles()
+        {
+            
+            bool progress = true;
+            while (progress)
+            {
+                progress = false;
+                foreach (SquareCell cell in emptyCells.ToList())
+                {
+                    if(IsNakedSingle(cell.Row,cell.Col,'0'))
+                    {
+                        char value = cell.PossibleValues.First();
+                        PlaceNumber(cell.Row, cell.Col, value);
+                        progress = true;
+                    }
+                    else
+                    {
+                        foreach(char val in cell.PossibleValues)
+                        {
+                            if(IsHiddenSingle(cell.Row,cell.Col,val))
+                            {
+                                PlaceNumber(cell.Row, cell.Col, val);
+                                progress = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (progress)
+                        break;
+                }
+            }
+        }
 
         /*“Check everywhere this value could go. 
          * If it fits anywhere else → not hidden. 
          * If it fits nowhere else → hidden single.”*/
         public bool IsHiddenSingle(int row, int col, char value)
         {
+            bool hiddenInRow = true;
+            bool hiddenInCol = true;
+            bool hiddenInBox = true;
             // Check if the value is a hidden single in its row
-            for (int c = 0; c < Constants.boardLen; c++)
+            for (int c = 0; c < Constants.boardLen && hiddenInRow; c++)
             {
                 if (c != col && this.board[row, c].Value == '0' && this.board[row, c].PossibleValues.Contains(value))
-                    return false;
+                    hiddenInRow = false;
             }
             // Check if the value is a hidden single in its column
-            for (int r = 0; r < Constants.boardLen; r++)
+            for (int r = 0; r < Constants.boardLen && hiddenInCol; r++)
             {
                 if (r != row && this.board[r, col].Value == '0' && this.board[r, col].PossibleValues.Contains(value))
-                    return false;
+                    hiddenInCol = false;
             }
             // Check if the value is a hidden single in its box
             int boxRowStart = (row / boxLen) * boxLen;
             int boxColStart = (col / boxLen) * boxLen;
-            for (int r = boxRowStart; r < boxRowStart + boxLen; r++)
+            for (int r = boxRowStart; r < boxRowStart + boxLen && hiddenInBox; r++)
             {
-                for (int c = boxColStart; c < boxColStart + boxLen; c++)
+                for (int c = boxColStart; c < boxColStart + boxLen && hiddenInBox; c++)
                 {
                     if ((r != row || c != col) && this.board[r, c].Value == '0' && this.board[r, c].PossibleValues.Contains(value))
-                        return false;
+                        hiddenInBox = false;
                 }
             }
-            return true;
+            return hiddenInBox || hiddenInCol || hiddenInRow;
         }
 
-        public bool ISNakedSingle(int row, int col, int value)
+        public bool IsNakedSingle(int row, int col, int value)
         {
-            if (this.board[row, col].Value == '0' && this.board[row, col].PossibleValues.Count == 1)
-                return true;
-            return false;
+            return this.board[row, col].Value == '0' && this.board[row, col].PossibleValues.Count == 1;
         }
         private HashSet<SquareCell> GetNakedPairs()
         {

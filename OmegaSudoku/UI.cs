@@ -13,8 +13,8 @@ namespace OmegaSudoku
         public static void StartSudokuSolver()
         {
             Console.WriteLine("Welcome to Omega Sudoku! \n enter HALAS to stop");
-            Stopwatch stopwatch = Stopwatch.StartNew();
-            while(true)
+            Stopwatch stopwatch = new Stopwatch();
+            while (true)
             {
                 Console.WriteLine("give sudoku board");
 
@@ -22,15 +22,19 @@ namespace OmegaSudoku
                 if (input == "HALAS")
                     break;
                 Console.WriteLine(input.Length);
-               /* try
+                try
                 {
 
                     SudokuBoard board = new SudokuBoard(input);
                     board.PrintBoard();
+                    long start = Stopwatch.GetTimestamp();
                     Solver.Solve(board);
                     Console.WriteLine("after Solving: ");
                     board.PrintBoard();
-
+                    long end = Stopwatch.GetTimestamp();
+                    long elapsedTicks = end - start;
+                    TimeSpan elapsed = TimeSpan.FromSeconds(elapsedTicks / (double)Stopwatch.Frequency);
+                    Console.WriteLine(elapsed.ToString(@"mm\:ss\.ffffff"));
 
                 }
                 catch (Exception ex)
@@ -39,15 +43,8 @@ namespace OmegaSudoku
                 }
                 finally
                 {
-                    // 2. Stop the stopwatch
-                    stopwatch.Stop();
-
-                    // 3. Get elapsed time
-                    TimeSpan ts = stopwatch.Elapsed;
-                    string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}", ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds / 10);
-                    Console.WriteLine("RunTime: " + elapsedTime);
                     Console.WriteLine("Thank you for using Omega Sudoku Solver!");
-                }*/
+                }
             }
 
 
