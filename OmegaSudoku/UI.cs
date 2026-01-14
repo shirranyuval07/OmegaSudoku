@@ -21,7 +21,7 @@ namespace OmegaSudoku
                 string input = Console.ReadLine();
                 if (input == "HALAS")
                     break;
-                Console.WriteLine(input.Length);
+                Console.WriteLine(input.Length +" is the input length");
                 try
                 {
 

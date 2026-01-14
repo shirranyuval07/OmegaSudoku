@@ -18,6 +18,10 @@ namespace OmegaSudoku
         private HashSet<SquareCell> emptyCells;
         public bool HasEmptyCells => emptyCells.Count > 0;
 
+        public HashSet<SquareCell> EmptyCells
+        {
+            get { return emptyCells; }
+        }
 
         public HashSet<char>[] RowUsed
         {
@@ -76,7 +80,7 @@ namespace OmegaSudoku
 
 
         public HashSet<SquareCell> GetEmptyCells() { return this.emptyCells; }
-        private int BoxIndex(int row, int col)
+        public int BoxIndex(int row, int col)
         {
             return (row / boxLen) * boxLen + (col / boxLen);
         }
@@ -154,13 +158,13 @@ namespace OmegaSudoku
             }
             return true;
         }
-
-        public bool PlaceNumber(int row, int col, char value)
+      
+        public bool PlaceNumber(int row, int col, char value,Stack<SquareCell> squareCells)
         {
             if (!IsValidPlace(row, col, value))
                 return false;
 
-
+            squareCells.Push(board[row, col]);
             rowUsed[row].Add(value);
             colUsed[col].Add(value);
             boxUsed[BoxIndex(row, col)].Add(value);
@@ -171,19 +175,25 @@ namespace OmegaSudoku
             InitializePossibleValues();
 
 
-
             return true;
         }
 
-        public void RemoveNumber(int row,int col)
+        public void RemoveNumbers(Stack<SquareCell> squareCells)
         {
-            char value = board[row, col].Value;
-            rowUsed[row].Remove(value);
-            colUsed[col].Remove(value);
-            boxUsed[BoxIndex(row, col)].Remove(value);
+            while(squareCells.Count > 0)
+            {
+                SquareCell curr =  squareCells.Pop();
+                int row = curr.Row;
+                int col = curr.Col;
+                char value = board[row, col].Value;
+                rowUsed[row].Remove(value);
+                colUsed[col].Remove(value);
+                boxUsed[BoxIndex(row, col)].Remove(value);
 
-            board[row, col].Value = '0';
-            emptyCells.Add(board[row, col]);
+                board[row, col].Value = '0';
+                emptyCells.Add(board[row, col]);
+            }
+            
 
             InitializePossibleValues();
         }
@@ -209,38 +219,68 @@ namespace OmegaSudoku
             }
         }
 
-        public void FillAllSingles()
-        {
+        //public void RemoveNakedPairs()
+        //{
+        //    HashSet<SquareCell> pairs = GetNakedPairs();
+        //    List<SquareCell> pairsList = pairs.ToList();
+        //    foreach (SquareCell first in pairsList)
+        //    {
+        //        foreach (SquareCell second in pairsList)
+        //        {
+        //            if (first != second)
+        //            {
+        //                //if are equal pairs
+        //                if (first.PossibleValues.SetEquals(second.PossibleValues))
+        //                {
+        //                    bool inSameRow = first.Row == second.Row;
+        //                    bool inSameCol = first.Col == second.Col;
+        //                    bool inSameBox = BoxIndex(first.Row, first.Col) == BoxIndex(second.Row, second.Col);
+        //                    if (inSameRow)
+        //                        RemovePossibilitiesFromRow(first.Row, first.Col, second.Col, first.PossibleValues);
+        //                    if (inSameCol)
+        //                        RemovePossibilitiesFromCol(first.Col, first.Row, second.Row, first.PossibleValues);
+        //                    if (inSameBox)
+        //                        RemovePossibilitiesFromBox(first.Row, first.Col, first.Row, second.Row, first.Col, second.Col, first.PossibleValues);
+        //                }
+        //            }
+        //        }
+        //    }
+
+        //}
+
+
+        //public void FillAllSingles(Stack<SquareCell> squareCells)
+        //{
             
-            bool progress = true;
-            while (progress)
-            {
-                progress = false;
-                foreach (SquareCell cell in emptyCells.ToList())
-                {
-                    if(IsNakedSingle(cell.Row,cell.Col,'0'))
-                    {
-                        char value = cell.PossibleValues.First();
-                        PlaceNumber(cell.Row, cell.Col, value);
-                        progress = true;
-                    }
-                    else
-                    {
-                        foreach(char val in cell.PossibleValues)
-                        {
-                            if(IsHiddenSingle(cell.Row,cell.Col,val))
-                            {
-                                PlaceNumber(cell.Row, cell.Col, val);
-                                progress = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (progress)
-                        break;
-                }
-            }
-        }
+        //    bool progress = true;
+        //    while (progress)
+        //    {
+        //        progress = false;
+        //        foreach (SquareCell cell in emptyCells.ToList())
+        //        {
+        //            if(IsNakedSingle(cell.Row,cell.Col))
+        //            {
+        //                char value = cell.PossibleValues.First();
+        //                PlaceNumber(cell.Row, cell.Col, value,squareCells);
+        //                progress = true;
+        //            }
+        //            else
+        //            {
+        //                foreach(char val in cell.PossibleValues)
+        //                {
+        //                    if(IsHiddenSingle(cell.Row,cell.Col,val))
+        //                    {
+        //                        PlaceNumber(cell.Row, cell.Col, val, squareCells);
+        //                        progress = true;
+        //                        break;
+        //                    }
+        //                }
+        //            }
+        //            if (progress)
+        //                break;
+        //        }
+        //    }
+        //}
 
         /*“Check everywhere this value could go. 
          * If it fits anywhere else → not hidden. 
@@ -276,26 +316,69 @@ namespace OmegaSudoku
             return hiddenInBox || hiddenInCol || hiddenInRow;
         }
 
-        public bool IsNakedSingle(int row, int col, int value)
+        public bool IsNakedSingle(int row, int col)
         {
             return this.board[row, col].Value == '0' && this.board[row, col].PossibleValues.Count == 1;
         }
-        private HashSet<SquareCell> GetNakedPairs()
+        
+        public HashSet<SquareCell> GetNakedPairs()
         {
             HashSet<SquareCell> pairs = new HashSet<SquareCell>();
-            for (int row = 0; row < Constants.boardLen; row++)
+            foreach(SquareCell cell in emptyCells)
             {
-                for(int col = 0; col < Constants.boardLen;col++)
-                {
-                    if (this.board[row, col].Value == '0' && this.board[row, col].PossibleValues.Count == 2)
-                    {
-                        pairs.Add(this.board[row, col]);
-                    }
-                }
+                if (cell.PossibleValues.Count == 2)
+                    pairs.Add(cell);
             }
             return pairs;
         }
 
 
+
+
+        public void RemovePossibilitiesFromRow(int row, int colFirst, int colSecond, HashSet<char> values)
+        {
+            List<char> valsList = values.ToList();
+
+            for (int i = 0; i < Constants.boardLen; i++)
+            {
+                foreach (char c in valsList)
+                {
+                    if (i != colFirst && i != colSecond)
+                        board[row, i].RemovePossibleValue(c);
+
+                }
+            }
+        }
+        public void RemovePossibilitiesFromCol(int col, int rowFirst, int rowSecond, HashSet<char> values)
+        {
+            List<char> valsList = values.ToList();
+
+            for (int i = 0; i < Constants.boardLen; i++)
+            {
+                foreach (char c in valsList)
+                {
+                    if (i != rowFirst && i != rowSecond)
+                        board[i, col].RemovePossibleValue(c);
+
+                }
+            }
+        }
+        public void RemovePossibilitiesFromBox(int row, int col, int rowFirst, int rowSecond, int colFirst, int colSecond, HashSet<char> values)
+        {
+            int boxRowStart = (row / boxLen) * boxLen;
+            int boxColStart = (col / boxLen) * boxLen;
+            List<char> valsList = values.ToList();
+            for (int r = boxRowStart; r < boxRowStart + boxLen; r++)
+            {
+                for (int c = boxColStart; c < boxColStart + boxLen; c++)
+                {
+                    foreach (char v in valsList)
+                    {
+                        if ((r != rowFirst && r != rowSecond) || (c != colFirst && c != colSecond))
+                            board[r, c].RemovePossibleValue(v);
+                    }
+                }
+            }
+        }
     }
 }

@@ -10,8 +10,10 @@ namespace OmegaSudoku
     {
         public static bool Solve(SudokuBoard board)
         {
-            if(board == null) return false;
-            board.FillAllSingles();
+            Stack<SquareCell> implementedCells = new Stack<SquareCell>();
+            if (board == null) return false;
+            ConstraintPropagations.FillAllSingles(implementedCells,board);
+            ConstraintPropagations.RemoveNakedPairs(board);
             if (!board.HasEmptyCells) return true;
             
             SquareCell emptyCell = board.GetFirstEmptyCellWithFewestPossibilities();
@@ -20,11 +22,13 @@ namespace OmegaSudoku
 
             foreach(char value in emptyCell.PossibleValues)
             {
-                board.PlaceNumber(emptyCell.Row,emptyCell.Col,value);
-                //board.FillNakedSingles();
+                implementedCells = new Stack<SquareCell>();
+                board.PlaceNumber(emptyCell.Row,emptyCell.Col,value,implementedCells);
+                ConstraintPropagations.FillAllSingles(implementedCells, board);
+                ConstraintPropagations.RemoveNakedPairs(board);
                 if (Solve(board))
                     return true;
-                board.RemoveNumber(emptyCell.Row,emptyCell.Col);
+                board.RemoveNumbers(implementedCells);
             }
             return false;
 

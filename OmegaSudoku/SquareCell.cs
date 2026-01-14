@@ -21,6 +21,13 @@ namespace OmegaSudoku
             this.value = value;
             this.possibleValues = new HashSet<char>();
         }
+        public SquareCell(SquareCell cell)
+        {
+            this.row = cell.row;
+            this.col = cell.col;
+            this.value = cell.value;
+            this.possibleValues = new HashSet<char>(cell.possibleValues);
+        }
         public void SetPossibleValues(HashSet<char> values)
         {
             this.possibleValues = values;
@@ -28,8 +35,10 @@ namespace OmegaSudoku
 
         public void RemovePossibleValue(char val)
         {
+            if (val != '0') return;
             this.possibleValues.Remove(val);
         }
+
         public HashSet<char> PossibleValues
         {
             get { return possibleValues; }
