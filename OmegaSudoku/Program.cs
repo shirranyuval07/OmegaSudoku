@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace OmegaSudoku
 {
-    internal class Program
+    class Program
     {
         static void Main(string[] args)
         {

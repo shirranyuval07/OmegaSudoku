@@ -1,3 +1,9 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="OmegaSudoku/bin/Debug/sudoku.csv" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OmegaSudoku.Tests.Unit/OmegaSudoku.Tests.Unit.csproj" Id="72c3d410-7598-462d-a166-b64ea34ed8f8" />
+  </Folder>
   <Project Path="OmegaSudoku/OmegaSudoku.csproj" Id="f3afd24e-da24-4c53-9ab3-cd79a874319b" />
 </Solution>

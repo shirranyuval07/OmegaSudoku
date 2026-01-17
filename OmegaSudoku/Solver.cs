@@ -31,10 +31,6 @@ namespace OmegaSudoku
                 board.RemoveNumbers(implementedCells);
             }
             return false;
-
-
-            
-
         }
     }
 }

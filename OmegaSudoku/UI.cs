@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -13,6 +15,10 @@ namespace OmegaSudoku
         public static void StartSudokuSolver()
         {
             Console.WriteLine("Welcome to Omega Sudoku! \n enter HALAS to stop");
+            long start = 0;
+            long end = 0;
+            long elapsedTicks = 0;
+            TimeSpan elapsed = TimeSpan.Zero;
             Stopwatch stopwatch = new Stopwatch();
             while (true)
             {
@@ -27,13 +33,13 @@ namespace OmegaSudoku
 
                     SudokuBoard board = new SudokuBoard(input);
                     board.PrintBoard();
-                    long start = Stopwatch.GetTimestamp();
+                    start = Stopwatch.GetTimestamp();
                     Solver.Solve(board);
                     Console.WriteLine("after Solving: ");
                     board.PrintBoard();
-                    long end = Stopwatch.GetTimestamp();
-                    long elapsedTicks = end - start;
-                    TimeSpan elapsed = TimeSpan.FromSeconds(elapsedTicks / (double)Stopwatch.Frequency);
+                    end = Stopwatch.GetTimestamp();
+                    elapsedTicks = end - start;
+                    elapsed = TimeSpan.FromSeconds(elapsedTicks / (double)Stopwatch.Frequency);
                     Console.WriteLine(elapsed.ToString(@"mm\:ss\.ffffff"));
 
                 }
@@ -41,13 +47,10 @@ namespace OmegaSudoku
                 {
                     Console.WriteLine("An error occurred: " + ex.Message);
                 }
-                finally
-                {
-                    Console.WriteLine("Thank you for using Omega Sudoku Solver!");
-                }
             }
-
+            Console.WriteLine("Thank you for using Omega Sudoku Solver!");
 
         }
+
     }
 }

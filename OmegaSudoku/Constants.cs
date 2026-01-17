@@ -11,6 +11,7 @@ namespace OmegaSudoku
     {
         public static int boardLen = 9;
         public static string symbols = "123456789";
+        public static char emptyCell = '0';
         
         public static void SetSymbol()
         {
