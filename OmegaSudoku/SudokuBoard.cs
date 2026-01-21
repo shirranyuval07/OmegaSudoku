@@ -11,11 +11,13 @@ namespace OmegaSudoku
 
         private int boxLen;
 
-        private HashSet<char>[] rowUsed;
-        private HashSet<char>[] colUsed;
-        private HashSet<char>[] boxUsed;
+        private int[] rowUsed;
+        private int[] colUsed;
+        private int[] boxUsed;
 
         private HashSet<SquareCell> emptyCells;
+
+        private int[,] allCells;
         public bool HasEmptyCells => emptyCells.Count > 0;
 
         public HashSet<SquareCell> EmptyCells
@@ -23,15 +25,20 @@ namespace OmegaSudoku
             get { return emptyCells; }
         }
 
-        public HashSet<char>[] RowUsed
+        public int[,] AllCells
+        {
+            get { return allCells; }
+        }
+
+        public int[] RowUsed
         {
             get { return rowUsed; }
         }
-        public HashSet<char>[] ColUsed
+        public int[] ColUsed
         {
             get { return colUsed; }
         }
-        public HashSet<char>[] BoxUsed
+        public int[] BoxUsed
         {
             get { return boxUsed; }
         }
@@ -42,21 +49,15 @@ namespace OmegaSudoku
             Constants.boardLen = (int)Math.Sqrt(boardString.Length);
             Constants.SetSymbol();
             boxLen = (int)Math.Sqrt(Constants.boardLen);
-            rowUsed = new HashSet<char>[Constants.boardLen];
-            colUsed = new HashSet<char>[Constants.boardLen];
-            boxUsed = new HashSet<char>[Constants.boardLen];
-            for (int i = 0; i < Constants.boardLen; i++)
-            {
-                rowUsed[i] = new HashSet<char>();
-                colUsed[i] = new HashSet<char>();
-                boxUsed[i] = new HashSet<char>();
-            }
+            rowUsed = new int[Constants.boardLen];
+            colUsed = new int[Constants.boardLen];
+            boxUsed = new int[Constants.boardLen];
 
             this.emptyCells = new HashSet<SquareCell>();
+            this.allCells = new int[Constants.boardLen, Constants.boardLen];
 
 
             board = new SquareCell[Constants.boardLen, Constants.boardLen];
-
             for (int row = 0; row < Constants.boardLen; row++)
             {
 
@@ -64,14 +65,24 @@ namespace OmegaSudoku
                 {
                     char value = boardString[row * Constants.boardLen + col];
                     board[row, col] = new SquareCell(row, col, value);
+
                     if (value == Constants.emptyCell)
+                    {
                         emptyCells.Add(board[row, col]);
+                        allCells[row, col] = CreateMask();
+                    }
+                    if (value != Constants.emptyCell)
+                    {
+                        int bit = 1 << (value - '1');
+
+                        rowUsed[row] |= bit;
+                        colUsed[col] |= bit;
+                        boxUsed[BoxIndex(row, col)] |= bit;
+
+                        allCells[row, col] = bit;
+                    }
                 }
-
-
             }
-
-            AddPreExistingNumbers();
             InitializePossibleValues();
 
             if (!IsValidBoard())
@@ -87,29 +98,14 @@ namespace OmegaSudoku
 
         private bool IsValidPlace(int row, int col, char value)
         {
-            return !rowUsed[row].Contains(value)
-                && !colUsed[col].Contains(value)
-                && !boxUsed[BoxIndex(row, col)].Contains(value);
+            int bit = 1 << (value - '1');
+
+            return (rowUsed[row] & bit) == 0
+                && (colUsed[col] & bit) == 0
+                && (boxUsed[BoxIndex(row, col)] & bit) == 0;
 
         }
 
-        private void AddPreExistingNumbers()
-        {
-            for (int row = 0; row < Constants.boardLen; row++)
-            {
-                for (int col = 0; col < Constants.boardLen; col++)
-                {
-                    char value = board[row, col].Value;
-                    if (value != Constants.emptyCell)
-                    {
-                        rowUsed[row].Add(value);
-                        colUsed[col].Add(value);
-                        boxUsed[BoxIndex(row, col)].Add(value);
-
-                    }
-                }
-            }
-        }
 
         public void InitializePossibleValues()
         {
@@ -120,83 +116,153 @@ namespace OmegaSudoku
                 {
                     if (board[row, col].Value == Constants.emptyCell)
                     {
-                        var possibleValues = new HashSet<char>();
+                        int mask = 0;
                         foreach (char d in Constants.symbols)
                         {
                             if (IsValidPlace(row, col, d))
                             {
-                                possibleValues.Add(d);
+                                mask |= SudokuHelper.BitFromChar(d);
                             }
                         }
-                        board[row, col].SetPossibleValues(possibleValues);
+                        board[row, col].PossibleMask = mask;
                     }
                 }
             }
         }
 
-        public SquareCell GetFirstEmptyCellWithFewestPossibilities()
+        public SquareCell GetBestCell()
         {
+            if (emptyCells.Count == 0)
+                return null;
             SquareCell sc = this.emptyCells.First();
-            foreach(SquareCell cell in emptyCells)
+            foreach (SquareCell cell in emptyCells)
             {
-                if(cell.PossibleValues.Count() < sc.PossibleValues.Count())
+                if (cell.PossibleCount < sc.PossibleCount)
                     sc = cell;
             }
+
             return sc;
         }
+        /*
+        public int CountNumEmpty(int row, int col)
+        {
+            int count = 0;
+            count += SudokuHelper.CountBits(GetPossibleValues(row, col));
+            for (int r = 0; r < Constants.boardLen; r++)
+            {
+                if (r != row)
+                    count += SudokuHelper.CountBits(GetPossibleValues(r, col));
 
-        private bool IsValidBoard()
+            }
+            for (int c = 0; c < Constants.boardLen; c++)
+            {
+                if (c != col)
+                    count += SudokuHelper.CountBits(GetPossibleValues(row, c));
+            }
+            int boxRowStart = (row / boxLen) * boxLen;
+            int boxColStart = (col / boxLen) * boxLen;
+            for (int r = boxRowStart; r < boxRowStart + boxLen; r++)
+            {
+                for (int c = boxColStart; c < boxColStart + boxLen; c++)
+                {
+                    if (r != row && c != col)
+                        count += SudokuHelper.CountBits(GetPossibleValues(r, c));
+                }
+            }
+            return count;
+        }*/
+
+        //returns bit representation of possible values for cell.
+        public int GetPossibleValues(int row, int col)
+        {
+            return allCells[row, col];
+        }
+        public int CreateMask()
+        {
+            int mask = 0;
+            for (int i = 0; i < Constants.boardLen; i++)
+            {
+                mask |= (1 << i);
+            }
+            return mask;
+        }
+
+        public bool IsValidBoard()
         {
             for (int row = 0; row < Constants.boardLen; row++)
             {
                 for (int col = 0; col < Constants.boardLen; col++)
                 {
                     if (board[row, col].Value == Constants.emptyCell &&
-                        board[row, col].PossibleValues.Count == 0)
+                        board[row, col].Failed())
                         return false;
                 }
             }
             return true;
         }
-      
-        public bool PlaceNumber(int row, int col, char value,Stack<SquareCell> squareCells)
+
+
+
+        public bool PlaceNumber(int row, int col, char value, Stack<Move> moves)
         {
             if (!IsValidPlace(row, col, value))
                 return false;
 
-            squareCells.Push(board[row, col]);
-            rowUsed[row].Add(value);
-            colUsed[col].Add(value);
-            boxUsed[BoxIndex(row, col)].Add(value);
+            SquareCell cell = board[row, col];
 
-            board[row, col].Value = value;
-            emptyCells.Remove(board[row, col]);
+            int bit = 1 << (value - '1');
 
-            InitializePossibleValues();
+            // Save current mask of this cell
+            moves.Push(new Move(cell, cell.PossibleMask));
 
+            // Set value
+            cell.Value = value;
+            emptyCells.Remove(cell);
+            cell.PossibleMask = 0;
 
+            // Update board usage
+            rowUsed[row] |= bit;
+            colUsed[col] |= bit;
+            boxUsed[BoxIndex(row, col)] |= bit;
+
+            // Update neighbors
+            foreach (var loc in cell.GetNeighbors())
+            {
+                SquareCell neighbor = board[loc.Item1, loc.Item2];
+                if (neighbor.Value == Constants.emptyCell && neighbor.Contains(value))
+                {
+                    moves.Push(new Move(neighbor, neighbor.PossibleMask)); // save mask
+                    neighbor.RemovePossibleValue(value);
+                }
+            }
             return true;
         }
 
-        public void RemoveNumbers(Stack<SquareCell> squareCells)
+
+        public void RemoveNumbers(Stack<Move> moves)
         {
-            while(squareCells.Count > 0)
+            while (moves.Count > 0)
             {
-                SquareCell curr =  squareCells.Pop();
-                int row = curr.Row;
-                int col = curr.Col;
-                char value = board[row, col].Value;
-                rowUsed[row].Remove(value);
-                colUsed[col].Remove(value);
-                boxUsed[BoxIndex(row, col)].Remove(value);
+                Move move = moves.Pop();
+                SquareCell cell = move.Cell;
 
-                board[row, col].Value = Constants.emptyCell;
-                emptyCells.Add(board[row, col]);
+                if (cell.Value != Constants.emptyCell)
+                {
+                    // Undo number placement
+                    int bit = SudokuHelper.BitFromChar(cell.Value);
+                    rowUsed[cell.Row] &= ~bit;
+                    colUsed[cell.Col] &= ~bit;
+                    boxUsed[BoxIndex(cell.Row, cell.Col)] &= ~bit;
+
+                    cell.Value = Constants.emptyCell;
+                    emptyCells.Add(cell);
+                }
+
+                // Restore previous possible mask
+                cell.PossibleMask = move.PreviousMask;
             }
-            
-
-            InitializePossibleValues();
         }
+
 
 
 
@@ -206,7 +272,7 @@ namespace OmegaSudoku
             for (int row = 0; row < Constants.boardLen; row++)
             {
                 if (row % boxLen == 0 && row != 0)
-                    Console.WriteLine(new string('-',(boxLen * Constants.boardLen) -3)); // -3 bc of the Console.Write(" | "); (size is 3)
+                    Console.WriteLine(new string('-', (boxLen * Constants.boardLen) - 3)); // -3 bc of the Console.Write(" | "); (size is 3)
 
                 for (int col = 0; col < Constants.boardLen; col++)
                 {
@@ -231,13 +297,13 @@ namespace OmegaSudoku
             // Check if the value is a hidden single in its row
             for (int c = 0; c < Constants.boardLen && hiddenInRow; c++)
             {
-                if (c != col && this.board[row, c].Value == Constants.emptyCell && this.board[row, c].PossibleValues.Contains(value))
+                if (c != col && this.board[row, c].Value == Constants.emptyCell && this.board[row, c].Contains(value))
                     hiddenInRow = false;
             }
             // Check if the value is a hidden single in its column
             for (int r = 0; r < Constants.boardLen && hiddenInCol; r++)
             {
-                if (r != row && this.board[r, col].Value == Constants.emptyCell && this.board[r, col].PossibleValues.Contains(value))
+                if (r != row && this.board[r, col].Value == Constants.emptyCell && this.board[r, col].Contains(value))
                     hiddenInCol = false;
             }
             // Check if the value is a hidden single in its box
@@ -247,7 +313,7 @@ namespace OmegaSudoku
             {
                 for (int c = boxColStart; c < boxColStart + boxLen && hiddenInBox; c++)
                 {
-                    if ((r != row || c != col) && this.board[r, c].Value == Constants.emptyCell && this.board[r, c].PossibleValues.Contains(value))
+                    if ((r != row || c != col) && this.board[r, c].Value == Constants.emptyCell && this.board[r, c].Contains(value))
                         hiddenInBox = false;
                 }
             }
@@ -256,15 +322,15 @@ namespace OmegaSudoku
 
         public bool IsNakedSingle(int row, int col)
         {
-            return this.board[row, col].Value == Constants.emptyCell && this.board[row, col].PossibleValues.Count == 1;
+            return this.board[row, col].Value == Constants.emptyCell && SudokuHelper.CountBits(this.board[row, col].PossibleMask) == 1;
         }
-        
+
         public HashSet<SquareCell> GetNakedPairs()
         {
             HashSet<SquareCell> pairs = new HashSet<SquareCell>();
-            foreach(SquareCell cell in emptyCells)
+            foreach (SquareCell cell in emptyCells)
             {
-                if (cell.PossibleValues.Count == 2)
+                if (SudokuHelper.CountBits(cell.PossibleMask)== 2)
                     pairs.Add(cell);
             }
             return pairs;
@@ -272,7 +338,7 @@ namespace OmegaSudoku
 
 
 
-
+        //for naked pairs from here:
         public void RemovePossibilitiesFromRow(int row, int colFirst, int colSecond, HashSet<char> values)
         {
             List<char> valsList = values.ToList();
@@ -283,10 +349,13 @@ namespace OmegaSudoku
                 {
                     if (i != colFirst && i != colSecond)
                         board[row, i].RemovePossibleValue(c);
-
                 }
             }
         }
+
+
+
+
         public void RemovePossibilitiesFromCol(int col, int rowFirst, int rowSecond, HashSet<char> values)
         {
             List<char> valsList = values.ToList();
@@ -297,7 +366,6 @@ namespace OmegaSudoku
                 {
                     if (i != rowFirst && i != rowSecond)
                         board[i, col].RemovePossibleValue(c);
-
                 }
             }
         }
@@ -312,8 +380,10 @@ namespace OmegaSudoku
                 {
                     foreach (char v in valsList)
                     {
-                        if ((r != rowFirst && r != rowSecond) || (c != colFirst && c != colSecond))
+                        if (!((r == rowFirst && c == colFirst) || (r == rowSecond && c == colSecond)))
+                        {
                             board[r, c].RemovePossibleValue(v);
+                        }
                     }
                 }
             }
@@ -322,7 +392,7 @@ namespace OmegaSudoku
         public override string ToString()
         {
             string str = "";
-            for(int row = 0; row < Constants.boardLen; row++)
+            for (int row = 0; row < Constants.boardLen; row++)
             {
                 for (int col = 0; col < Constants.boardLen; col++)
                 {

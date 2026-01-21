@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,10 +9,11 @@ namespace OmegaSudoku
 {
     static class ConstraintPropagations
     {
-        public static void RemoveNakedPairs(SudokuBoard board)
+        public static bool RemoveNakedPairs(SudokuBoard board)
         {
             HashSet<SquareCell> pairs = board.GetNakedPairs();
             List<SquareCell> pairsList = pairs.ToList();
+            bool progressed = false;
             foreach (SquareCell first in pairsList)
             {
                 foreach (SquareCell second in pairsList)
@@ -19,31 +21,42 @@ namespace OmegaSudoku
                     if (first != second)
                     {
                         //if are equal pairs
-                        if (first.PossibleValues.SetEquals(second.PossibleValues))
+                        if (first.PossibleMask.Equals(second.PossibleValues))
                         {
                             bool inSameRow = first.Row == second.Row;
                             bool inSameCol = first.Col == second.Col;
                             bool inSameBox = board.BoxIndex(first.Row, first.Col) == board.BoxIndex(second.Row, second.Col);
                             if (inSameRow)
-                                board.RemovePossibilitiesFromRow(first.Row, first.Col, second.Col, first.PossibleValues);
+                            {
+                                board.RemovePossibilitiesFromRow(first.Row, first.Col, second.Col, (HashSet<char>)first.PossibleValues);
+                                progressed = true;
+                            }
                             if (inSameCol)
-                                board.RemovePossibilitiesFromCol(first.Col, first.Row, second.Row, first.PossibleValues);
+                            {
+                                board.RemovePossibilitiesFromCol(first.Col, first.Row, second.Row, (HashSet<char>)first.PossibleValues);
+                                progressed = true;
+                            }
                             if (inSameBox)
-                                board.RemovePossibilitiesFromBox(first.Row, first.Col, first.Row, second.Row, first.Col, second.Col, first.PossibleValues);
+                            {
+                                board.RemovePossibilitiesFromBox(first.Row, first.Col, first.Row, second.Row, first.Col, second.Col, (HashSet<char>)first.PossibleValues);
+                                progressed = true;
+                            }
                         }
                     }
                 }
             }
+            return progressed;
         }
-        public static void FillAllSingles(Stack<SquareCell> squareCells, SudokuBoard board)
+        
+        public static bool FillAllSingles(Stack<Move> squareCells, SudokuBoard board)
         {
-
             bool progress = true;
             while (progress)
             {
                 progress = false;
                 foreach (SquareCell cell in board.EmptyCells.ToList())
                 {
+
                     if (board.IsNakedSingle(cell.Row, cell.Col))
                     {
                         char value = cell.PossibleValues.First();
@@ -66,7 +79,8 @@ namespace OmegaSudoku
                         break;
                 }
             }
+            return progress;
         }
-
+       
     }
 }

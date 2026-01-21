@@ -8,29 +8,42 @@ namespace OmegaSudoku
 {
     static class Solver
     {
+
+
         public static bool Solve(SudokuBoard board)
         {
-            Stack<SquareCell> implementedCells = new Stack<SquareCell>();
+            return Solves(board, new Stack<Move>());
+        }
+        public static bool Solves(SudokuBoard board, Stack<Move> implementedCells)
+        {
             if (board == null) return false;
-            ConstraintPropagations.FillAllSingles(implementedCells,board);
+            ConstraintPropagations.FillAllSingles(implementedCells, board);
             ConstraintPropagations.RemoveNakedPairs(board);
-            if (!board.HasEmptyCells) return true;
-            
-            SquareCell emptyCell = board.GetFirstEmptyCellWithFewestPossibilities();
+            if (!board.HasEmptyCells)
+                return true;
+            SquareCell emptyCell = board.GetBestCell();
             if (!emptyCell.PossibleValues.Any())
                 return false;
 
-            foreach(char value in emptyCell.PossibleValues)
+            foreach (char value in emptyCell.PossibleValues.ToList())
             {
-                implementedCells = new Stack<SquareCell>();
-                board.PlaceNumber(emptyCell.Row,emptyCell.Col,value,implementedCells);
+                implementedCells = new Stack<Move>();
+
+                board.PlaceNumber(emptyCell.Row, emptyCell.Col, value, implementedCells);
+
                 ConstraintPropagations.FillAllSingles(implementedCells, board);
                 ConstraintPropagations.RemoveNakedPairs(board);
-                if (Solve(board))
+
+                if (Solves(board, implementedCells))
                     return true;
                 board.RemoveNumbers(implementedCells);
             }
             return false;
+
+
+
+
         }
+
     }
 }
