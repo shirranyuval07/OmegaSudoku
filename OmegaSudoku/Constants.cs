@@ -36,6 +36,7 @@ namespace OmegaSudoku
                 symbols = "123456789ABCDEFGHIJKLMNOP";
                 boxLen = 5;
             }
+
         }
 
 

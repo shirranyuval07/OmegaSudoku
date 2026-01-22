@@ -11,6 +11,7 @@ namespace OmegaSudoku
         private int row { get; set; }
         private int col { get; set; }
 
+
         private int possibleMask;
 
         public int PossibleMask
@@ -76,31 +77,20 @@ namespace OmegaSudoku
                 {
                     int bit = SudokuHelper.LowestBit(mask);
                     yield return SudokuHelper.MaskToChar(bit);
-                    mask &= mask - 1;
+                    mask = SudokuHelper.ClearLowestBit(mask);
                 }
             }
         }
 
-        /*public void SetPossibleValues(IEnumerable<char> values)
+
+        public bool RemovePossibleValue(char value)
         {
-            possibleMask = 0;
-            foreach (char v in values)
-            {
-                if (v != Constants.emptyCell)
-                    possibleMask |= 1 << (v - '1');
-            }
-        }
-        */
+            if (value == Constants.emptyCell) return false;
 
-
-        public bool RemovePossibleValue(char val)
-        {
-            if (val == Constants.emptyCell) return false;
-
-            int bit = 1 << (val - '1');
+            int bit = SudokuHelper.BitFromChar(value);
             if ((possibleMask & bit) == 0) return false;
 
-            possibleMask &= ~bit;
+            possibleMask = SudokuHelper.ClearBit(possibleMask,bit);
             return true;
         }
 
@@ -112,14 +102,14 @@ namespace OmegaSudoku
             int bit = SudokuHelper.BitFromChar(val);
             bool changed = (possibleMask & bit) == 0;
 
-            possibleMask |= bit;
+            possibleMask = SudokuHelper.AddBit(possibleMask,bit);
             return changed;
         }
         public int PossibleCount => SudokuHelper.CountBits(possibleMask);
 
-        public bool Contains(char val)
+        public bool Contains(char value)
         {
-            int bit = 1 << (val - '1');
+            int bit = SudokuHelper.BitFromChar(value);
             return (possibleMask & bit) != 0;
         }
 

@@ -11,41 +11,9 @@ namespace OmegaSudoku
     {
         public static bool RemoveNakedPairs(SudokuBoard board)
         {
-            HashSet<SquareCell> pairs = board.GetNakedPairs();
-            List<SquareCell> pairsList = pairs.ToList();
-            bool progressed = false;
-            foreach (SquareCell first in pairsList)
-            {
-                foreach (SquareCell second in pairsList)
-                {
-                    if (first != second)
-                    {
-                        //if are equal pairs
-                        if (first.PossibleMask.Equals(second.PossibleValues))
-                        {
-                            bool inSameRow = first.Row == second.Row;
-                            bool inSameCol = first.Col == second.Col;
-                            bool inSameBox = board.BoxIndex(first.Row, first.Col) == board.BoxIndex(second.Row, second.Col);
-                            if (inSameRow)
-                            {
-                                board.RemovePossibilitiesFromRow(first.Row, first.Col, second.Col, (HashSet<char>)first.PossibleValues);
-                                progressed = true;
-                            }
-                            if (inSameCol)
-                            {
-                                board.RemovePossibilitiesFromCol(first.Col, first.Row, second.Row, (HashSet<char>)first.PossibleValues);
-                                progressed = true;
-                            }
-                            if (inSameBox)
-                            {
-                                board.RemovePossibilitiesFromBox(first.Row, first.Col, first.Row, second.Row, first.Col, second.Col, (HashSet<char>)first.PossibleValues);
-                                progressed = true;
-                            }
-                        }
-                    }
-                }
-            }
-            return progressed;
+            bool changed = false;
+
+            return changed;
         }
         
         public static bool FillAllSingles(Stack<Move> squareCells, SudokuBoard board)
@@ -62,6 +30,7 @@ namespace OmegaSudoku
                         char value = cell.PossibleValues.First();
                         board.PlaceNumber(cell.Row, cell.Col, value, squareCells);
                         progress = true;
+                        break;
                     }
                     else
                     {

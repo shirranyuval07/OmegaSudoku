@@ -50,6 +50,7 @@ namespace OmegaSudoku
                     Console.WriteLine("An error occurred: " + ex.Message);
                 }
             }
+            //checking 50k 17_clue sudokus to notice exactly where it falls
             List<string> listA = new List<string>();
 
             using (var reader = new StreamReader(@"C:\Users\Owner\Yuval_Omega\OmegaSudoku\OmegaSudoku\bin\Debug\17_clue.txt"))
@@ -80,6 +81,8 @@ namespace OmegaSudoku
                     elapsedTicks = end - start;
                     elapsed = TimeSpan.FromSeconds(elapsedTicks / (double)Stopwatch.Frequency);
                     Console.WriteLine(count++);
+                    Console.WriteLine(elapsed.ToString(@"mm\:ss\.ffffff"));
+
                     if (elapsed.TotalSeconds > 1)
                         throw new Exception("TestSolveSudoku failed: Sudoku Took too long");
 

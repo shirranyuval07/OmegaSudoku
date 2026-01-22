@@ -11,6 +11,7 @@ namespace OmegaSudoku
         public SquareCell Cell { get; }
         public int PreviousMask { get; }
 
+
         public Move(SquareCell cell, int previousMask)
         {
             Cell = cell;
