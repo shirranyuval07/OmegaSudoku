@@ -62,7 +62,8 @@ namespace OmegaSudoku
                     listA.Add(line);
                 }
             }
-
+            TimeSpan maxTimeSpan = TimeSpan.Zero;
+            string longestPuzzle = "";
             foreach (string puzzle in listA)
             {
                 start = 0;
@@ -82,6 +83,11 @@ namespace OmegaSudoku
                     elapsed = TimeSpan.FromSeconds(elapsedTicks / (double)Stopwatch.Frequency);
                     Console.WriteLine(count++);
                     Console.WriteLine(elapsed.ToString(@"mm\:ss\.ffffff"));
+                    if (elapsed > maxTimeSpan)
+                    {
+                        maxTimeSpan = elapsed;
+                        longestPuzzle = puzzle;
+                    }
 
                     if (elapsed.TotalSeconds > 1)
                         throw new Exception("TestSolveSudoku failed: Sudoku Took too long");
@@ -93,6 +99,9 @@ namespace OmegaSudoku
                     throw new Exception("TestSolveSudoku failed: An exception occurred while solving the puzzle.", ex);
                 }
             }
+
+            Console.WriteLine("Longest puzzle is {0} \n Run time is: {1}",longestPuzzle,maxTimeSpan);
+
             Console.WriteLine("Thank you for using Omega Sudoku Solver!");
 
         }

@@ -8,36 +8,50 @@ namespace OmegaSudoku
 {
     static class Solver
     {
+
         public static bool Solve(SudokuBoard board)
         {
             return Solves(board, new Stack<Move>());
         }
-        public static bool Solves(SudokuBoard board, Stack<Move> implementedCells)
+        public static bool Solves(SudokuBoard board,  Stack<Move> forcedMoves)
         {
-            if (board == null) return false;
-            //ConstraintPropagations.RemoveNakedPairs(board);
-            ConstraintPropagations.FillAllSingles(implementedCells, board);
+            int checkpointMove = forcedMoves.Count;
+            ConstraintPropagations.FillAllSingles(forcedMoves, board);
             if (!board.HasEmptyCells)
                 return true;
-            SquareCell emptyCell = board.GetBestCell();
-            if (!emptyCell.PossibleValues.Any())
-                return false;
-
-            foreach (char value in emptyCell.PossibleValues.ToList())
+            SquareCell cell = board.GetBestCell();
+            if (cell == null || cell.PossibleCount == 0)
             {
-                implementedCells = new Stack<Move>();
-
-                board.PlaceNumber(emptyCell.Row, emptyCell.Col, value, implementedCells);
-
-                //ConstraintPropagations.RemoveNakedPairs(board);
-                ConstraintPropagations.FillAllSingles(implementedCells, board);
-
-                if (Solves(board, implementedCells))
-                    return true;
-                board.RemoveNumbers(implementedCells);
+                return false;
             }
+            int mask = cell.PossibleMask;
+            while (mask != 0)
+            {
+
+                int bit = SudokuHelper.LowestBit(mask);
+                mask = SudokuHelper.ClearLowestBit(mask);
+
+                char value = SudokuHelper.MaskToChar(bit);
+
+                int checkpointGuess = forcedMoves.Count;
+                if (!board.PlaceNumber(cell.Row, cell.Col, value, forcedMoves))
+                {
+                    board.RemoveNumbers(forcedMoves, checkpointGuess);
+                    continue;   
+                }
+                ConstraintPropagations.FillAffectedSingles(cell.Row,cell.Col,forcedMoves, board);
+
+                if (Solves(board,forcedMoves))
+                    return true;
+
+                board.RemoveNumbers(forcedMoves,checkpointGuess);
+            }
+
+
+            board.RemoveNumbers(forcedMoves,checkpointMove);
             return false;
         }
 
     }
+
 }

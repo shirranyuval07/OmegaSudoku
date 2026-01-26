@@ -11,7 +11,17 @@ namespace OmegaSudoku
     {
         public static int MaskForDigit(int d) => 1 << (d - 1);
         public static int LowestBit(int n) => n & -n;
-
+        public static int LowestBitIndex(int mask)
+        {
+            int bit = LowestBit(mask);
+            int index = 0;
+            while(bit > 1)
+            {
+                bit >>= 1;
+                index++;
+            }
+            return index;
+        }
         public static int ClearLowestBit(int n) => n &=  n - 1;
 
         public static int ClearBit(int n,int mask) => n &= ~mask;
@@ -26,18 +36,10 @@ namespace OmegaSudoku
         }
         public static char MaskToChar(int mask)
         {
-            int num = (int)Math.Log(mask, 2) + 1;
-            return (char)('0' + num);
+            int index = LowestBitIndex(mask);
+            return Constants.IndexToChar[index];
         }
-        public static int BitFromChar(char value) => 1 << (value - '1');
-        public static IEnumerable<char> ValuesFromMask(int mask)
-        {
-            for (int i = 0; i < Constants.boardLen; i++)
-            {
-                if ((mask & (1 << i)) != 0)
-                    yield return (char)('1' + i); 
-            }
-        }
+        public static int BitFromChar(char value) => 1 << Constants.CharToIndex[value];
 
 
         //counting number of bits that are "on"
@@ -51,5 +53,17 @@ namespace OmegaSudoku
             }
             return count;
         }
+        public static int BitIndexFromChar(char value)
+        {
+            if (value >= '1' && value <= '9')
+                return value - '1';  // '1' -> 0, '9' -> 8
+
+            // For extended boards (A-F for 16x16)
+            if (value >= 'A' && value <= 'Z')
+                return 9 + (value - 'A');
+
+            throw new ArgumentException($"Invalid Sudoku value: {value}");
+        }
+
     }
 }

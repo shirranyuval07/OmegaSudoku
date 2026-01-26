@@ -51,6 +51,7 @@
   <ItemGroup>
     <Compile Include="Constants.cs" />
     <Compile Include="ConstraintPropagations.cs" />
+    <Compile Include="HeapCell.cs" />
     <Compile Include="Move.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

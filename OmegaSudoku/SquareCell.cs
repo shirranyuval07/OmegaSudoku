@@ -12,6 +12,7 @@ namespace OmegaSudoku
         private int col { get; set; }
 
 
+
         private int possibleMask;
 
         public int PossibleMask
@@ -21,6 +22,7 @@ namespace OmegaSudoku
         }
 
         private Tuple<int, int>[] neighbors;
+
 
         private char value { get; set; }
         public SquareCell(int row, int col, char value)
@@ -66,20 +68,6 @@ namespace OmegaSudoku
                 }
             }
             this.neighbors = neighbors.ToArray();
-        }
-
-        public IEnumerable<char> PossibleValues
-        {
-            get
-            {
-                int mask = possibleMask;
-                while (mask != 0)
-                {
-                    int bit = SudokuHelper.LowestBit(mask);
-                    yield return SudokuHelper.MaskToChar(bit);
-                    mask = SudokuHelper.ClearLowestBit(mask);
-                }
-            }
         }
 
 
@@ -149,6 +137,10 @@ namespace OmegaSudoku
             return false;
         }
 
+        public override int GetHashCode()
+        {
+            return Row * 31 + Col;
+        }
 
     }
 }
