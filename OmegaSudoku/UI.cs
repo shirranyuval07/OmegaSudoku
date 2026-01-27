@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -51,6 +52,7 @@ namespace OmegaSudoku
                 }
             }
             //checking 50k 17_clue sudokus to notice exactly where it falls
+            /*
             List<string> listA = new List<string>();
 
             using (var reader = new StreamReader(@"C:\Users\Owner\Yuval_Omega\OmegaSudoku\OmegaSudoku\bin\Debug\17_clue.txt"))
@@ -63,6 +65,7 @@ namespace OmegaSudoku
                 }
             }
             TimeSpan maxTimeSpan = TimeSpan.Zero;
+            TimeSpan overall = TimeSpan.Zero;
             string longestPuzzle = "";
             foreach (string puzzle in listA)
             {
@@ -83,6 +86,7 @@ namespace OmegaSudoku
                     elapsed = TimeSpan.FromSeconds(elapsedTicks / (double)Stopwatch.Frequency);
                     Console.WriteLine(count++);
                     Console.WriteLine(elapsed.ToString(@"mm\:ss\.ffffff"));
+                    overall += elapsed;
                     if (elapsed > maxTimeSpan)
                     {
                         maxTimeSpan = elapsed;
@@ -102,8 +106,132 @@ namespace OmegaSudoku
 
             Console.WriteLine("Longest puzzle is {0} \n Run time is: {1}",longestPuzzle,maxTimeSpan);
 
+            Console.WriteLine("Overall time for 49,150 puzzles: " + overall.ToString(@"mm\:ss\.ffffff"));
+
+            Console.WriteLine("Average time is: " + overall.TotalMilliseconds / 49150 + " milliseconds");*/
+
+            List<string> listPuzzle = new List<string>();
+            List<string> listSol = new List<string>();
+            int i = 0;
+            using (var reader = new StreamReader(@"C:\Users\Owner\Yuval_Omega\OmegaSudoku\OmegaSudoku\bin\Debug\sudoku.csv"))
+            {
+                while (!reader.EndOfStream) // && i < 10000
+                {
+                    var line = reader.ReadLine();
+                    
+                    var strings = line.Split(',');
+
+                    listPuzzle.Add(strings[0]);
+                    listSol.Add(strings[1]);
+                }
+            }
+
+            var puzzleAndSol = listPuzzle.Zip(listSol, (puzzle, sol) => new { puzzle, sol });
+            TimeSpan maxTimeSpan = TimeSpan.Zero;
+            TimeSpan overall = TimeSpan.Zero;
+            string longestPuzzle = "";
+            Console.WriteLine();
+
+            foreach (var item in puzzleAndSol)
+            {
+                //if (count == 10000)
+                  //  break;
+                string puzzle = item.puzzle;
+                string sol = item.sol;
+                start = 0;
+                end = 0;
+                elapsedTicks = 0;
+                elapsed = TimeSpan.Zero;
+                stopwatch = new Stopwatch();
+                try
+                {
+                    start = Stopwatch.GetTimestamp();
+                    // Arrange
+                    SudokuBoard board = new SudokuBoard(puzzle);
+                    // Act
+                    Solver.Solve(board);
+                    if (board.ToString() != sol)
+                        throw new Exception("TestSolveSudoku failed: Sudoku solution is incorrect");
+                    end = Stopwatch.GetTimestamp();
+                    elapsedTicks = end - start;
+                    elapsed = TimeSpan.FromSeconds(elapsedTicks / (double)Stopwatch.Frequency);
+                    Console.Write("Number: "+count++ + " ,time is: "+ elapsed.ToString(@"mm\:ss\.ffffff") + "\r");
+                    overall += elapsed;
+                    if (elapsed > maxTimeSpan)
+                    {
+                        maxTimeSpan = elapsed;
+                        longestPuzzle = puzzle;
+                    }
+
+                    if (elapsed.TotalSeconds > 1)
+                        throw new Exception("TestSolveSudoku failed: Sudoku Took too long");
+
+                }
+                catch (Exception ex)
+                {
+                    // Assert
+                    throw new Exception("TestSolveSudoku failed: An exception occurred while solving the puzzle.", ex);
+                }
+            }
+
+            Console.WriteLine("Longest puzzle is {0} \n Run time is: {1}", longestPuzzle, maxTimeSpan);
+
+            Console.WriteLine("Overall time for 9,000,000 puzzles: " + overall.ToString(@"mm\:ss\.ffffff"));
+
+            Console.WriteLine("Average time is: " + overall.TotalMilliseconds / 9000000 + " milliseconds");
+
+
             Console.WriteLine("Thank you for using Omega Sudoku Solver!");
 
+        }
+        public static void StartSudokuSolver2()
+        {
+            Console.WriteLine("Welcome to Omega Sudoku Solver (FAST MODE)");
+
+            // Load puzzles
+            List<string> puzzles = new List<string>();
+            using (var reader = new StreamReader(
+                @"C:\Users\Owner\Yuval_Omega\OmegaSudoku\OmegaSudoku\bin\Debug\sudoku.csv"))
+            {
+                while (!reader.EndOfStream)
+                {
+                    var line = reader.ReadLine();
+                    var parts = line.Split(',');
+                    puzzles.Add(parts[0]);
+                }
+            }
+
+            Console.WriteLine($"Loaded {puzzles.Count:N0} puzzles");
+            Console.WriteLine("Starting solve...\n");
+            Console.WriteLine();
+            int count = 0;
+
+            var totalSw = Stopwatch.StartNew();
+
+            foreach (var puzzle in puzzles)
+            {
+                // Allocate new board each puzzle (no LoadFromString)
+                SudokuBoard board = new SudokuBoard(puzzle);
+
+                Solver.Solve(board);
+
+                count++;
+
+                // Progress every 100k puzzles
+                if (count % 100000 == 0)
+                {
+                    double elapsedSec = totalSw.Elapsed.TotalSeconds;
+                    double rate = count / elapsedSec;
+                    Console.Write($"Solved {count:N0} | {rate:N0} / sec | Elapsed {elapsedSec:F1}s \r");
+                }
+            }
+
+            totalSw.Stop();
+
+            Console.WriteLine("\nDONE");
+            Console.WriteLine($"Total puzzles solved: {count:N0}");
+            Console.WriteLine($"Total time: {totalSw.Elapsed}");
+            Console.WriteLine($"Average per puzzle: {totalSw.Elapsed.TotalMilliseconds / count:F6} ms");
         }
 
     }

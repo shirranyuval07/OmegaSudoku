@@ -42,6 +42,7 @@ namespace OmegaSudoku
             this.possibleMask = cell.possibleMask;
             InitializeNeighbors();
         }
+
         public void InitializeNeighbors()
         {
             var neighbors = new HashSet<Tuple<int, int>>();
