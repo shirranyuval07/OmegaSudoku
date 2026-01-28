@@ -21,7 +21,7 @@ namespace OmegaSudoku
             set { possibleMask = value; }
         }
 
-        private Tuple<int, int>[] neighbors;
+        public SquareCell[] Neighbors { get; set; }
 
 
         private char value { get; set; }
@@ -31,7 +31,7 @@ namespace OmegaSudoku
             this.col = col;
             this.value = value;
             this.possibleMask = value == Constants.emptyCell? (1 << Constants.boardLen) - 1: 0;
-            InitializeNeighbors();
+           // InitializeNeighbors();
 
         }
         public SquareCell(SquareCell cell)
@@ -40,36 +40,10 @@ namespace OmegaSudoku
             this.col = cell.col;
             this.value = cell.value;
             this.possibleMask = cell.possibleMask;
-            InitializeNeighbors();
+           // InitializeNeighbors();
         }
 
-        public void InitializeNeighbors()
-        {
-            var neighbors = new HashSet<Tuple<int, int>>();
-
-            for (int row = 0; row < Constants.boardLen; row++)
-            {
-                if (row != this.row)
-                    neighbors.Add(new Tuple<int, int>(row, this.col));
-
-            }
-            for (int col = 0; col < Constants.boardLen; col++)
-            {
-                if (col != this.col)
-                    neighbors.Add(new Tuple<int, int>(this.row, col));
-            }
-            int boxRowStart = (this.row / Constants.boxLen) * Constants.boxLen;
-            int boxColStart = (this.col / Constants.boxLen) * Constants.boxLen;
-            for (int r = boxRowStart; r < boxRowStart + Constants.boxLen; r++)
-            {
-                for (int c = boxColStart; c < boxColStart + Constants.boxLen; c++)
-                {
-                    if (r != this.row || c != this.col)
-                        neighbors.Add(new Tuple<int, int>(r, c));
-                }
-            }
-            this.neighbors = neighbors.ToArray();
-        }
+        
 
 
         public bool RemovePossibleValue(char value)
@@ -102,10 +76,6 @@ namespace OmegaSudoku
             return (possibleMask & bit) != 0;
         }
 
-        public Tuple<int, int>[] GetNeighbors()
-        {
-            return this.neighbors;
-        }
 
         public int Row
         {

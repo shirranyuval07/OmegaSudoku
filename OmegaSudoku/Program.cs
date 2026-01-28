@@ -13,7 +13,7 @@ namespace OmegaSudoku
         static void Main(string[] args)
         {
             Console.SetIn(new StreamReader(Console.OpenStandardInput(8192)));
-            UI.StartSudokuSolver2();
+            UI.StartSudokuSolver();
         }
 
     }

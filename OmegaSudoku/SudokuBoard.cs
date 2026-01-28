@@ -65,6 +65,33 @@ namespace OmegaSudoku
                 && (colUsed[col] & bit) == 0
                 && (boxUsed[BoxIndex(row, col)] & bit) == 0;
         }
+        public void InitializeNeighbors(SquareCell cell)
+        {
+            var neighbors = new HashSet<SquareCell>();
+
+            for (int row = 0; row < Constants.boardLen; row++)
+            {
+                if (row != cell.Row)
+                    neighbors.Add(board[row, cell.Col]);
+
+            }
+            for (int col = 0; col < Constants.boardLen; col++)
+            {
+                if (col != cell.Col)
+                    neighbors.Add(board[cell.Row, col]);
+            }
+            int boxRowStart = (cell.Row / Constants.boxLen) * Constants.boxLen;
+            int boxColStart = (cell.Col / Constants.boxLen) * Constants.boxLen;
+            for (int r = boxRowStart; r < boxRowStart + Constants.boxLen; r++)
+            {
+                for (int c = boxColStart; c < boxColStart + Constants.boxLen; c++)
+                {
+                    if (r != cell.Row || c != cell.Col)
+                        neighbors.Add(board[r, c]);
+                }
+            }
+            cell.Neighbors = neighbors.ToArray();
+        }
         private void InitializeBoard(string boardString)
         {
             for (int row = 0; row < Constants.boardLen; row++)
@@ -73,7 +100,6 @@ namespace OmegaSudoku
                 {
                     char value = boardString[row * Constants.boardLen + col];
                     board[row, col] = new SquareCell(row, col, value);
-
                     if (value == Constants.emptyCell)
                     {
                         emptyCells.Add(board[row, col]);
@@ -88,6 +114,14 @@ namespace OmegaSudoku
 
                         board[row, col].PossibleMask = bit;
                     }
+                }
+            }
+            // Initialize neighbors for each cell
+            for (int row = 0; row < Constants.boardLen; row++)
+            {
+                for (int col = 0; col < Constants.boardLen; col++)
+                {
+                    InitializeNeighbors(board[row, col]);
                 }
             }
         }
@@ -143,8 +177,13 @@ namespace OmegaSudoku
         // Degree heuristic: counts empty neighbors
         public int CountEmptyNeighbors(int row, int col)
         {
-            SquareCell cell = board[row, col];
-            return cell.GetNeighbors().Count(n => board[n.Item1, n.Item2].Value == Constants.emptyCell);
+            int count = 0;
+            foreach (var neighbor in board[row, col].Neighbors)
+            {
+                if (neighbor.Value == Constants.emptyCell)
+                    count++;
+            }
+            return count;
         }
 
         public bool PlaceNumber(int row, int col, char value, Stack<Move> moves)
@@ -169,15 +208,17 @@ namespace OmegaSudoku
 
             bool flag = true;
             // Update neighbors
-            foreach (var loc in cell.GetNeighbors())
+            foreach (SquareCell neighbor in cell.Neighbors)
             {
-                SquareCell neighbor = board[loc.Item1, loc.Item2];
+                if(neighbor.Value == Constants.emptyCell)
+                    counterEmptyNeighbors[neighbor.Row, neighbor.Col]--;
                 if (neighbor.Value == Constants.emptyCell && neighbor.Contains(value))
                 {
                     moves.Push(new Move(neighbor, neighbor.PossibleMask));
                     neighbor.RemovePossibleValue(value);
                     if (neighbor.PossibleMask == 0)
                         flag = false;
+
                 }
             }
             return flag;
@@ -199,6 +240,10 @@ namespace OmegaSudoku
 
                     cell.Value = Constants.emptyCell;
                     emptyCells.Add(cell);
+                    foreach (var neighbor in cell.Neighbors)
+                    {
+                        counterEmptyNeighbors[neighbor.Row, neighbor.Col]++;
+                    }
                 }
 
                 cell.PossibleMask = move.PreviousMask;
@@ -300,7 +345,30 @@ namespace OmegaSudoku
             return nakedPairs;
         }
 
-
+        //not used now. makes it slower for 9x9
+        public List<char> GetLCVValues(SquareCell cell)
+        {
+            List<Tuple<char, int>> valueConstraints = new List<Tuple<char, int>>();
+            int mask = cell.PossibleMask;
+            while (mask != 0)
+            {
+                int bit = SudokuHelper.LowestBit(mask);
+                mask = SudokuHelper.ClearLowestBit(mask);
+                char value = SudokuHelper.MaskToChar(bit);
+                int constraintCount = 0;
+                foreach (SquareCell neighbor in cell.Neighbors)
+                {
+                    if (neighbor.Value == Constants.emptyCell && neighbor.Contains(value))
+                    {
+                        constraintCount++;
+                    }
+                }
+                valueConstraints.Add(new Tuple<char, int>(value, constraintCount));
+            }
+            // Sort by constraint count (ascending)
+            valueConstraints.Sort((a, b) => a.Item2.CompareTo(b.Item2));
+            return valueConstraints.Select(vc => vc.Item1).ToList();
+        }
         public override string ToString()
         {
             string str = "";

@@ -22,8 +22,8 @@
                     SquareCell cell1 = cells[0];
                     SquareCell cell2 = cells[1];
 
-                    var neighbors1 = new HashSet<SquareCell>(cell1.GetNeighbors().Select(loc => board.board[loc.Item1, loc.Item2]));
-                    var neighbors2 = new HashSet<SquareCell>(cell2.GetNeighbors().Select(loc => board.board[loc.Item1, loc.Item2]));
+                    var neighbors1 = new HashSet<SquareCell>(cell1.Neighbors.Select(loc => board.board[loc.Row, loc.Col]));
+                    var neighbors2 = new HashSet<SquareCell>(cell2.Neighbors.Select(loc => board.board[loc.Row, loc.Col]));
 
                     neighbors1.IntersectWith(neighbors2);
                     neighbors1.Remove(cell1);
@@ -56,11 +56,11 @@
                     progress = false;
                     foreach (SquareCell cell in board.EmptyCells)
                     {
-                        int bit = SudokuHelper.LowestBit(cell.PossibleMask);
-                        char value = SudokuHelper.MaskToChar(bit);
+                        
                         if(board.IsNakedSingle(cell.Row, cell.Col))
                         {
-                            
+                            int bit = SudokuHelper.LowestBit(cell.PossibleMask);
+                            char value = SudokuHelper.MaskToChar(bit);
                             board.PlaceNumber(cell.Row, cell.Col, value, squareCells);
                             progress = true;
                             break;
@@ -70,9 +70,9 @@
                             int mask = cell.PossibleMask;
                             while(mask != 0)
                             {
-                                bit = SudokuHelper.LowestBit(mask);
+                                int bit = SudokuHelper.LowestBit(mask);
                                 mask = SudokuHelper.ClearLowestBit(mask);
-                                value = SudokuHelper.MaskToChar(bit);
+                                char value = SudokuHelper.MaskToChar(bit);
                                 if (board.IsHiddenSingle(cell.Row, cell.Col, value))
                                 {
                                     board.PlaceNumber(cell.Row, cell.Col, value, squareCells);
@@ -99,9 +99,8 @@
             HashSet<SquareCell> visited = new HashSet<SquareCell>();
 
             // Seed with neighbors of the starting cell
-            foreach (var (r, c) in board.board[row, col].GetNeighbors())
+            foreach (SquareCell neighbor in board.board[row, col].Neighbors)
             {
-                SquareCell neighbor = board.board[r, c];
                 if(neighbor.Value == Constants.emptyCell && visited.Add(neighbor))
                     queue.Enqueue(neighbor);
             }
@@ -139,9 +138,8 @@
                 {
                     progress = true;
                     // Only enqueue neighbors of newly filled cells
-                    foreach (var (nr, nc) in cell.GetNeighbors())
+                    foreach (SquareCell neighbor in cell.Neighbors)
                     {
-                        SquareCell neighbor = board.board[nr, nc];
                         if(neighbor.Value == Constants.emptyCell && visited.Add(neighbor))
                             queue.Enqueue(neighbor);
                     }

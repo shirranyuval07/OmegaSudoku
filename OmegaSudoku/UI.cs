@@ -52,7 +52,7 @@ namespace OmegaSudoku
                 }
             }
             //checking 50k 17_clue sudokus to notice exactly where it falls
-            /*
+            
             List<string> listA = new List<string>();
 
             using (var reader = new StreamReader(@"C:\Users\Owner\Yuval_Omega\OmegaSudoku\OmegaSudoku\bin\Debug\17_clue.txt"))
@@ -84,8 +84,7 @@ namespace OmegaSudoku
                     end = Stopwatch.GetTimestamp();
                     elapsedTicks = end - start;
                     elapsed = TimeSpan.FromSeconds(elapsedTicks / (double)Stopwatch.Frequency);
-                    Console.WriteLine(count++);
-                    Console.WriteLine(elapsed.ToString(@"mm\:ss\.ffffff"));
+                    Console.Write("Number: " + count++ + " ,time is: " + elapsed.ToString(@"mm\:ss\.ffffff") + "\r");
                     overall += elapsed;
                     if (elapsed > maxTimeSpan)
                     {
@@ -108,8 +107,8 @@ namespace OmegaSudoku
 
             Console.WriteLine("Overall time for 49,150 puzzles: " + overall.ToString(@"mm\:ss\.ffffff"));
 
-            Console.WriteLine("Average time is: " + overall.TotalMilliseconds / 49150 + " milliseconds");*/
-
+            Console.WriteLine("Average time is: " + overall.TotalMilliseconds / 49150 + " milliseconds");
+            /*
             List<string> listPuzzle = new List<string>();
             List<string> listSol = new List<string>();
             int i = 0;
@@ -180,7 +179,7 @@ namespace OmegaSudoku
 
             Console.WriteLine("Average time is: " + overall.TotalMilliseconds / 9000000 + " milliseconds");
 
-
+            */
             Console.WriteLine("Thank you for using Omega Sudoku Solver!");
 
         }
