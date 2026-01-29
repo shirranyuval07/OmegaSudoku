@@ -34,6 +34,16 @@ namespace OmegaSudoku
                 digit++;
             return digit;
         }
+        public static int IndexFromBit(int bit)
+        {
+            int index = 0;
+            while (bit > 1)
+            {
+                bit >>= 1;
+                index++;
+            }
+            return index;
+        }
         public static char MaskToChar(int mask)
         {
             int index = LowestBitIndex(mask);
@@ -53,6 +63,7 @@ namespace OmegaSudoku
             }
             return count;
         }
+
         public static int BitIndexFromChar(char value)
         {
             if (value >= '1' && value <= '9')

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace OmegaSudoku
 {
-    class Move
+    readonly struct Move
     {
         public SquareCell Cell { get; }
         public int PreviousMask { get; }

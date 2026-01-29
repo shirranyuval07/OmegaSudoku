@@ -17,9 +17,16 @@ namespace OmegaSudoku
 
         public int PossibleMask
         {
-            get { return possibleMask; }
-            set { possibleMask = value; }
+            get => possibleMask;
+            set
+            {
+                possibleMask = value;
+                PossibleCount = SudokuHelper.CountBits(possibleMask);
+            }
         }
+
+        public int PossibleCount { get;  set; }
+
 
         public SquareCell[] Neighbors { get; set; }
 
@@ -54,6 +61,7 @@ namespace OmegaSudoku
             if ((possibleMask & bit) == 0) return false;
 
             possibleMask = SudokuHelper.ClearBit(possibleMask,bit);
+            PossibleCount--;
             return true;
         }
 
@@ -66,9 +74,9 @@ namespace OmegaSudoku
             bool changed = (possibleMask & bit) == 0;
 
             possibleMask = SudokuHelper.AddBit(possibleMask,bit);
+            if (changed) PossibleCount++;
             return changed;
         }
-        public int PossibleCount => SudokuHelper.CountBits(possibleMask);
 
         public bool Contains(char value)
         {
