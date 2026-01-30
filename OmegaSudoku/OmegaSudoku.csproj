@@ -51,7 +51,9 @@
   <ItemGroup>
     <Compile Include="Constants.cs" />
     <Compile Include="ConstraintPropagations.cs" />
+    <Compile Include="FastSudokuBoard.cs" />
     <Compile Include="HeapCell.cs" />
+    <Compile Include="ISudokuBoard.cs" />
     <Compile Include="Move.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/Solution Items/">
+    <File Path="../../Downloads/sudoku.csv" />
     <File Path="OmegaSudoku/bin/Debug/17_clue.txt" />
   </Folder>
   <Folder Name="/tests/">

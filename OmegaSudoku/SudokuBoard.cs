@@ -4,13 +4,12 @@ using System.Linq;
 
 namespace OmegaSudoku
 {
-    class SudokuBoard
+    class SudokuBoard : ISudokuBoard
     {
         public SquareCell[,] board;
 
         private int boxLen;
 
-        // --- ADDED: O(1) Count Arrays ---
         public int[,] RowCounts;
         public int[,] ColCounts;
         public int[,] BoxCounts;
@@ -32,6 +31,66 @@ namespace OmegaSudoku
         public int[] BoxUsed => boxUsed;
 
         public int numOfFilledCells { get; set; }
+        SquareCell[,] ISudokuBoard.board
+        {
+            get => board;
+            set => board = value;
+        }
+
+        int ISudokuBoard.boxLen
+        {
+            get => boxLen;
+            set => boxLen = value;
+        }
+
+        int[,] ISudokuBoard.RowCounts
+        {
+            get => RowCounts;
+            set => RowCounts = value;
+        }
+
+        int[,] ISudokuBoard.ColCounts
+        {
+            get => ColCounts;
+            set => ColCounts = value;
+        }
+
+        int[,] ISudokuBoard.BoxCounts
+        {
+            get => BoxCounts;
+            set => BoxCounts = value;
+        }
+
+        int[] ISudokuBoard.rowUsed
+        {
+            get => rowUsed;
+            set => rowUsed = value;
+        }
+
+        int[] ISudokuBoard.colUsed
+        {
+            get => colUsed;
+            set => colUsed = value;
+        }
+
+        int[] ISudokuBoard.boxUsed
+        {
+            get => boxUsed;
+            set => boxUsed = value;
+        }
+
+        HashSet<SquareCell> ISudokuBoard.EmptyCells
+        {
+            get => emptyCells;
+            set => emptyCells = value;
+        }
+
+        int ISudokuBoard.fullmask
+        {
+            get => fullmask;
+            set => fullmask = value;
+        }
+
 
         public SudokuBoard(string boardString)
         {
@@ -374,5 +433,23 @@ namespace OmegaSudoku
                         return false;
             return true;
         }
+
+        void ISudokuBoard.InitializeBoard(string boardString)
+        {
+            InitializeBoard(boardString);
+        }
+
+        void ISudokuBoard.UpdateCounts(int r, int c, int mask, int delta)
+        {
+            UpdateCounts(r, c, mask, delta);
+        }
+
+        public void DecrementSingleCount(int r, int c, int d)
+        {
+            RowCounts[r, d]--;
+            ColCounts[c, d]--;
+            BoxCounts[BoxIndex(r, c), d]--;
+        }
+
     }
 }

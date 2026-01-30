@@ -9,7 +9,7 @@ namespace OmegaSudoku
 {
     static class ConstraintPropagations
     {
-        public static bool FillAllSingles(Stack<Move> squareCells, SudokuBoard board)
+        public static bool FillAllSingles(Stack<Move> squareCells, ISudokuBoard board)
         {
             bool progress = true;
             while (progress)
@@ -64,7 +64,7 @@ namespace OmegaSudoku
             return progress;
         }
 
-        public static bool FillAffectedSingles(int row, int col, Stack<Move> squareCells, SudokuBoard board)
+        public static bool FillAffectedSingles(int row, int col, Stack<Move> squareCells, ISudokuBoard board)
         {
 
             bool progress = false;

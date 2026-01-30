@@ -22,6 +22,7 @@ namespace OmegaSudoku
             long elapsedTicks = 0;
             TimeSpan elapsed = TimeSpan.Zero;
             Stopwatch stopwatch = new Stopwatch();
+            ISudokuBoard board = null;
 
             while (true)
             {
@@ -34,7 +35,24 @@ namespace OmegaSudoku
                 try
                 {
 
-                    SudokuBoard board = new SudokuBoard(input);
+                    if(input.Length <=256)
+                        board = new SudokuBoard(input);
+                    else
+                    {
+                        double counter = input.Count(c => c == '0');
+                        Console.WriteLine((double)(counter /625));
+                        if (counter <= 0.95 * 625) // alot of try and error
+                        {
+                            board = new FastSudokuBoard(input);
+                        }
+                        else
+                        {
+                            board = new SudokuBoard(input);
+                        }
+                    }
+
+
+
                     board.PrintBoard();
                     start = Stopwatch.GetTimestamp();
                     Solver.Solve(board);
@@ -149,7 +167,7 @@ namespace OmegaSudoku
                 {
                     start = Stopwatch.GetTimestamp();
                     // Arrange
-                    SudokuBoard board = new SudokuBoard(puzzle);
+                    board = new SudokuBoard(puzzle);
                     // Act
                     if (!board.IsValidBoard())
                         continue;
