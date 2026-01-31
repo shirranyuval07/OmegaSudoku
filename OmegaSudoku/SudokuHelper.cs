@@ -9,7 +9,6 @@ namespace OmegaSudoku
 {
     static class SudokuHelper
     {
-        public static int MaskForDigit(int d) => 1 << (d - 1);
         public static int LowestBit(int n) => n & -n;
         public static int LowestBitIndex(int mask)
         {
@@ -27,13 +26,7 @@ namespace OmegaSudoku
         public static int ClearBit(int n,int mask) => n &= ~mask;
 
         public static int AddBit(int n, int bit) => n |= bit;
-        public static int BitToDigit(int bit)
-        {
-            int digit = 1;
-            while ((bit >>= 1) != 0)
-                digit++;
-            return digit;
-        }
+        
         public static int IndexFromBit(int bit)
         {
             int index = 0;
@@ -64,16 +57,12 @@ namespace OmegaSudoku
             return count;
         }
 
-        public static int BitIndexFromChar(char value)
+        public static void ValidateChar(char value, int boardLen)
         {
-            if (value >= '1' && value <= '9')
-                return value - '1';  // '1' -> 0, '9' -> 8
-
-            // For extended boards (A-F for 16x16)
-            if (value >= 'A' && value <= 'Z')
-                return 9 + (value - 'A');
-
-            throw new ArgumentException($"Invalid Sudoku value: {value}");
+            if (value != Constants.emptyCell && (!Constants.CharToIndex.ContainsKey(value) || Constants.CharToIndex[value] >= boardLen))
+            {
+                throw new InvalidPuzzleException($"Invalid character '{value}' for Sudoku board of size {boardLen}x{boardLen}.");
+            }
         }
 
     }

@@ -34,14 +34,13 @@ namespace OmegaSudoku
                 Console.WriteLine(input.Length +" is the input length");
                 try
                 {
-
                     if(input.Length <=256)
                         board = new SudokuBoard(input);
                     else
                     {
                         double counter = input.Count(c => c == '0');
                         Console.WriteLine((double)(counter /625));
-                        if (counter <= 0.95 * 625) // alot of try and error
+                        if (counter == 625 || counter <= 625*0.95)
                         {
                             board = new FastSudokuBoard(input);
                         }
@@ -55,7 +54,9 @@ namespace OmegaSudoku
 
                     board.PrintBoard();
                     start = Stopwatch.GetTimestamp();
-                    Solver.Solve(board);
+                    bool solved = Solver.Solve(board);
+                    if(!solved)
+                        throw new SudokuException("Sudoku could not be solved");
                     Console.WriteLine("after Solving: ");
                     board.PrintBoard();
                     end = Stopwatch.GetTimestamp();
@@ -64,7 +65,7 @@ namespace OmegaSudoku
                     Console.WriteLine(elapsed.ToString(@"mm\:ss\.ffffff"));
 
                 }
-                catch (Exception ex)
+                catch (SudokuException ex)
                 {
                     Console.WriteLine("An error occurred: " + ex.Message);
                 }
@@ -173,7 +174,7 @@ namespace OmegaSudoku
                         continue;
                     Solver.Solve(board);
                     if (board.ToString() != sol)
-                        throw new Exception("TestSolveSudoku failed: Sudoku solution is incorrect");
+                        throw new SudokuException("TestSolveSudoku failed: Sudoku solution is incorrect");
                     end = Stopwatch.GetTimestamp();
                     elapsedTicks = end - start;
                     elapsed = TimeSpan.FromSeconds(elapsedTicks / (double)Stopwatch.Frequency);
@@ -186,14 +187,14 @@ namespace OmegaSudoku
                     }
 
                     if (elapsed.TotalSeconds > 1)
-                        throw new Exception("TestSolveSudoku failed: Sudoku Took too long");
+                        throw new SudokuException("TestSolveSudoku failed: Sudoku Took too long");
 
                 }
-                catch (Exception ex)
+                catch (SudokuException ex)
                 {
                     // Assert
                     Console.WriteLine(puzzle);
-                    throw new Exception("TestSolveSudoku failed: An exception occurred while solving the puzzle.", ex);
+                    throw new SudokuException("TestSolveSudoku failed: An exception occurred while solving the puzzle.", ex);
                 }
             }
 
@@ -256,6 +257,137 @@ namespace OmegaSudoku
             Console.WriteLine($"Total time: {totalSw.Elapsed}");
             Console.WriteLine($"Average per puzzle: {totalSw.Elapsed.TotalMilliseconds / count:F6} ms");
         }
+        public static void StartSudokuSolverGenerated()
+        {
+            Console.WriteLine("Welcome to Omega Sudoku!");
 
+            int j = 0;
+
+            while (true)
+            {
+                try
+                {
+                    j++;
+                    Console.WriteLine("Give board size");
+                    string s = UI.GeneratorNxN(int.Parse(Console.ReadLine()));
+                    ISudokuBoard board = null;
+
+                    if (s.Length <= 256)
+                        board = new SudokuBoard(s);
+                    else
+                    {
+                        double counter = s.Count(c => c == '0');
+                        Console.WriteLine((double)(counter / 625));
+                        if (counter <= 0.95 * 625) // alot of try and error
+                        {
+                            board = new FastSudokuBoard(s);
+                        }
+                        else
+                        {
+                            board = new SudokuBoard(s);
+                        }
+                    }
+                    double ratio = (double)s.Count(c => c == '0') / s.Length;
+                    Console.WriteLine($"Difficulty Ratio: {ratio:P2}");
+
+
+                    Console.WriteLine("--- Initial Board ---");
+                    board.PrintBoard();
+
+                    Console.WriteLine("Look at the board for a second");
+                    Thread.Sleep(1000);
+                    long start = Stopwatch.GetTimestamp();
+                    bool solved = Solver.Solve(board);
+                    long end = Stopwatch.GetTimestamp();
+
+                    if (solved)
+                    {
+                        Console.WriteLine("\n--- SOLVED ---");
+                        board.PrintBoard();
+                    }
+                    else
+                    {
+                        Console.WriteLine("\n!!! FAILED TO SOLVE !!!");
+                    }
+
+                    TimeSpan elapsed = TimeSpan.FromSeconds((end - start) / (double)Stopwatch.Frequency);
+                    Console.WriteLine($"Time: {elapsed:mm\\:ss\\.ffffff}");
+
+                    Console.WriteLine("\nWaiting 5 seconds...");
+                    Thread.Sleep(5000);
+                    Console.Write("\x1b[3J");
+                    Console.Clear();
+                    Thread.Sleep(1000);
+
+                }
+                catch (SudokuException ex)
+                {
+                    Console.WriteLine("An error occurred: " + ex.Message);
+                }
+            }
+        }
+        public static string GeneratorNxN(int boardLength)
+        {
+            if(boardLength > 25 || boardLength < 4)
+                throw new InvalidPuzzleException("Board length must be between 4 and 25");
+            Constants.boardLen = boardLength;
+            Constants.SetSymbol();
+
+            int totalCells = boardLength * boardLength;
+
+            string emptyBoard = new string('0', totalCells);
+            SudokuBoard board = new SudokuBoard(emptyBoard);
+            bool solved = Solver.Solve(board);
+            if(!solved)
+                throw new Exception("Generated board is unsolvable");
+            Random rnd = new Random();
+
+            int cellsToRemove;
+
+            switch (boardLength)
+            {
+                case 4:
+                    cellsToRemove = 10;
+                    break;
+                case 9:
+                    cellsToRemove = 64;
+                    break;
+                case 16:
+                    cellsToRemove = 200;
+                    break;
+                case 25:
+                    cellsToRemove = 580;
+                    break;
+                default:
+                    cellsToRemove = (int)(totalCells * 0.60);
+                    break;
+            }
+            List<Tuple<int, int>> allCoordinates = new List<Tuple<int, int>>();
+            for (int r = 0; r < boardLength; r++)
+            {
+                for (int c = 0; c < boardLength; c++)
+                {
+                    allCoordinates.Add(new Tuple<int, int>(r, c));
+                }
+            }
+
+            int n = allCoordinates.Count;
+            while (n > 1)
+            {
+                n--;
+                int k = rnd.Next(n + 1);
+                var value = allCoordinates[k];
+                allCoordinates[k] = allCoordinates[n];
+                allCoordinates[n] = value;
+            }
+
+            for (int i = 0; i < cellsToRemove; i++)
+            {
+                var coord = allCoordinates[i];
+                board.board[coord.Item1, coord.Item2].Value = '0';
+            }
+
+            return board.ToString();
+        }
     }
 }

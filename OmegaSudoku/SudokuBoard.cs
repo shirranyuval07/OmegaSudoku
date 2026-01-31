@@ -94,9 +94,22 @@ namespace OmegaSudoku
 
         public SudokuBoard(string boardString)
         {
-            Constants.boardLen = (int)Math.Sqrt(boardString.Length);
+            if(boardString == null || boardString == "")
+                throw new InvalidPuzzleException("The provided board string is null or empty.");
+            double sqrtLen = Math.Sqrt(boardString.Length);
+            if(sqrtLen % 1 != 0)
+                throw new InvalidPuzzleException("The provided board string length is not a perfect square.");
+
+            Constants.boardLen = (int)sqrtLen;
             Constants.SetSymbol();
-            boxLen = (int)Math.Sqrt(Constants.boardLen);
+            double sqrtBoxLen = Math.Sqrt(Constants.boardLen);
+            if(sqrtBoxLen % 1 != 0)
+                throw new InvalidPuzzleException("The board length does not have an integer square root, invalid for Sudoku.");
+
+            boxLen = (int)sqrtBoxLen;
+
+            int clues = boardString.Count(c => c != Constants.emptyCell);
+
 
             fullmask = (1 << Constants.boardLen) - 1;
 
@@ -118,7 +131,7 @@ namespace OmegaSudoku
             InitializePossibleValues();
 
             if (!IsValidBoard())
-                throw new Exception("The provided board is not valid.");
+                throw new InvalidPuzzleException("The provided board is not valid.");
         }
 
         public int BoxIndex(int row, int col) => (row / boxLen) * boxLen + (col / boxLen);
@@ -166,6 +179,7 @@ namespace OmegaSudoku
                 {
                     char value = boardString[row * Constants.boardLen + col];
                     board[row, col] = new SquareCell(row, col, value);
+                    SudokuHelper.ValidateChar(value, Constants.boardLen);
                     if (value == Constants.emptyCell)
                     {
                         emptyCells.Add(board[row, col]);
@@ -294,18 +308,17 @@ namespace OmegaSudoku
 
             UpdateCounts(row, col, cell.PossibleMask, -1);
 
-            // Set value
+            //maintenance
             cell.Value = value;
             emptyCells.Remove(cell);
             cell.PossibleMask = 0;
 
-            // Update board usage
             rowUsed[row] = SudokuHelper.AddBit(rowUsed[row], bit);
             colUsed[col] = SudokuHelper.AddBit(colUsed[col], bit);
             boxUsed[BoxIndex(row, col)] = SudokuHelper.AddBit(boxUsed[BoxIndex(row, col)], bit);
 
             bool flag = true;
-            // Update neighbors
+            //propagate
             foreach (SquareCell neighbor in cell.Neighbors)
             {
                 if (neighbor.Value == Constants.emptyCell)
@@ -369,6 +382,65 @@ namespace OmegaSudoku
             }
         }
 
+        
+
+        public bool IsNakedSingle(int row, int col)
+        {
+            return board[row, col].Value == Constants.emptyCell && board[row, col].PossibleMask != 0 && (board[row, col].PossibleMask & (board[row, col].PossibleMask - 1)) == 0;
+        }
+
+        
+        public bool IsValidBoard()
+        {
+            int[] checkRowUsed = new int[Constants.boardLen];
+            int[] checkColUsed = new int[Constants.boardLen];
+            int[] checkBoxUsed = new int[Constants.boardLen];
+
+            for (int row = 0; row < Constants.boardLen; row++)
+            {
+                for (int col = 0; col < Constants.boardLen; col++)
+                {
+                    SquareCell cell = board[row, col];
+
+                    if (cell.Value == Constants.emptyCell)
+                    {
+                        if (cell.Failed())
+                            return false;
+                    }
+                    else
+                    {
+                        int bit = SudokuHelper.BitFromChar(cell.Value);
+                        int boxIdx = BoxIndex(row, col);
+                        bool isDuplicate = (checkRowUsed[row] & bit) != 0 ||
+                                           (checkColUsed[col] & bit) != 0 ||
+                                           (checkBoxUsed[boxIdx] & bit) != 0;
+                        if (isDuplicate)
+                            return false;
+                        checkRowUsed[row] |= bit;
+                        checkColUsed[col] |= bit;
+                        checkBoxUsed[boxIdx] |= bit;
+                    }
+                }
+            }
+
+            return true;
+        }
+        void ISudokuBoard.InitializeBoard(string boardString)
+        {
+            InitializeBoard(boardString);
+        }
+
+        void ISudokuBoard.UpdateCounts(int r, int c, int mask, int delta)
+        {
+            UpdateCounts(r, c, mask, delta);
+        }
+
+        public void DecrementSingleCount(int r, int c, int d)
+        {
+            RowCounts[r, d]--;
+            ColCounts[c, d]--;
+            BoxCounts[BoxIndex(r, c), d]--;
+        }
         public void PrintBoard()
         {
             Console.WriteLine();
@@ -387,35 +459,6 @@ namespace OmegaSudoku
                 Console.WriteLine();
             }
         }
-
-        public bool IsNakedSingle(int row, int col)
-        {
-            return board[row, col].Value == Constants.emptyCell && board[row, col].PossibleMask != 0 && (board[row, col].PossibleMask & (board[row, col].PossibleMask - 1)) == 0;
-        }
-
-        public List<char> GetLCVValues(SquareCell cell)
-        {
-            List<Tuple<char, int>> valueConstraints = new List<Tuple<char, int>>();
-            int mask = cell.PossibleMask;
-            while (mask != 0)
-            {
-                int bit = SudokuHelper.LowestBit(mask);
-                mask = SudokuHelper.ClearLowestBit(mask);
-                char value = SudokuHelper.MaskToChar(bit);
-                int constraintCount = 0;
-                foreach (SquareCell neighbor in cell.Neighbors)
-                {
-                    if (neighbor.Value == Constants.emptyCell && neighbor.Contains(value))
-                    {
-                        constraintCount++;
-                    }
-                }
-                valueConstraints.Add(new Tuple<char, int>(value, constraintCount));
-            }
-            // Sort by constraint count (ascending)
-            valueConstraints.Sort((a, b) => a.Item2.CompareTo(b.Item2));
-            return valueConstraints.Select(vc => vc.Item1).ToList();
-        }
         public override string ToString()
         {
             string str = "";
@@ -423,32 +466,6 @@ namespace OmegaSudoku
                 for (int col = 0; col < Constants.boardLen; col++)
                     str += board[row, col].Value;
             return str;
-        }
-
-        public bool IsValidBoard()
-        {
-            for (int row = 0; row < Constants.boardLen; row++)
-                for (int col = 0; col < Constants.boardLen; col++)
-                    if (board[row, col].Value == Constants.emptyCell && board[row, col].Failed())
-                        return false;
-            return true;
-        }
-
-        void ISudokuBoard.InitializeBoard(string boardString)
-        {
-            InitializeBoard(boardString);
-        }
-
-        void ISudokuBoard.UpdateCounts(int r, int c, int mask, int delta)
-        {
-            UpdateCounts(r, c, mask, delta);
-        }
-
-        public void DecrementSingleCount(int r, int c, int d)
-        {
-            RowCounts[r, d]--;
-            ColCounts[c, d]--;
-            BoxCounts[BoxIndex(r, c), d]--;
         }
 
     }

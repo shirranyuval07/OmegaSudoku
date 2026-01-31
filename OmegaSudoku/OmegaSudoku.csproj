@@ -60,6 +60,7 @@
     <Compile Include="Solver.cs" />
     <Compile Include="SquareCell.cs" />
     <Compile Include="SudokuBoard.cs" />
+    <Compile Include="SudokuException.cs" />
     <Compile Include="SudokuHelper.cs" />
     <Compile Include="UI.cs" />
   </ItemGroup>

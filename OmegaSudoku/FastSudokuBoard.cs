@@ -19,13 +19,11 @@ namespace OmegaSudoku
         private int[] colUsed;
         private int[] boxUsed;
 
-        // Core Collection
         public HashSet<SquareCell> EmptyCells;
 
         private int fullmask;
         public int EmptyCount => EmptyCells.Count;
 
-        // ===== ISudokuBoard IMPLEMENTATION =====
 
         SquareCell[,] ISudokuBoard.board
         {
@@ -92,9 +90,19 @@ namespace OmegaSudoku
 
         public FastSudokuBoard(string boardString)
         {
-            Constants.boardLen = (int)Math.Sqrt(boardString.Length);
+            if (boardString == null || boardString == "")
+                throw new InvalidPuzzleException("The provided board string is null or empty.");
+            double sqrtLen = Math.Sqrt(boardString.Length);
+            if (sqrtLen % 1 != 0)
+                throw new InvalidPuzzleException("The provided board string length is not a perfect square.");
+
+            Constants.boardLen = (int)sqrtLen;
             Constants.SetSymbol();
-            boxLen = (int)Math.Sqrt(Constants.boardLen);
+            double sqrtBoxLen = Math.Sqrt(Constants.boardLen);
+            if (sqrtBoxLen % 1 != 0)
+                throw new InvalidPuzzleException("The board length does not have an integer square root, invalid for Sudoku.");
+
+            boxLen = (int)sqrtBoxLen;
             fullmask = (1 << Constants.boardLen) - 1;
 
             int len = Constants.boardLen;
@@ -110,6 +118,12 @@ namespace OmegaSudoku
             board = new SquareCell[len, len];
 
             InitializeBoard(boardString);
+            int clues = Constants.boardLen * Constants.boardLen - EmptyCells.Count;
+            if (clues > 0 && clues < 4)// 1-3 clues takes too much time (about 1.5 minutes for 25x25)
+                throw new InvalidPuzzleException("Board has too few clues (1-3). " +
+                                                  "It must be empty (0) or have a valid puzzle start.");
+            if (!IsValidBoard())
+                throw new InvalidPuzzleException("The provided board string represents an invalid Sudoku board.");
         }
 
         public int BoxIndex(int row, int col) => (row / boxLen) * boxLen + (col / boxLen);
@@ -122,6 +136,8 @@ namespace OmegaSudoku
                 int c = i % Constants.boardLen;
                 char val = boardString[i];
                 board[r, c] = new SquareCell(r, c, val);
+
+                SudokuHelper.ValidateChar(val, Constants.boardLen);
 
                 if (val == Constants.emptyCell)
                 {
@@ -199,7 +215,6 @@ namespace OmegaSudoku
 
                     DecrementSingleCount(neighbor.Row, neighbor.Col, Constants.CharToIndex[value]);
 
-                    // FIX: Just update mask. The SquareCell setter handles PossibleCount decrement.
                     neighbor.PossibleMask &= ~bit;
 
                     if (neighbor.PossibleMask == 0) return false;
@@ -217,7 +232,7 @@ namespace OmegaSudoku
                 bool wasFilled = cell.Value != Constants.emptyCell;
 
                 int oldMask = cell.PossibleMask;
-                cell.PossibleMask = move.PreviousMask; // Setter auto-updates Count
+                cell.PossibleMask = move.PreviousMask; 
 
                 if (wasFilled)
                 {
@@ -287,7 +302,41 @@ namespace OmegaSudoku
             cell.Neighbors = l.ToArray();
         }
 
-        public bool IsValidBoard() => true;
+        public bool IsValidBoard()
+        {
+            int[] checkRowUsed = new int[Constants.boardLen];
+            int[] checkColUsed = new int[Constants.boardLen];
+            int[] checkBoxUsed = new int[Constants.boardLen];
+
+            for (int row = 0; row < Constants.boardLen; row++)
+            {
+                for (int col = 0; col < Constants.boardLen; col++)
+                {
+                    SquareCell cell = board[row, col];
+
+                    if (cell.Value == Constants.emptyCell)
+                    {
+                        if (cell.Failed())
+                            return false;
+                    }
+                    else
+                    {
+                        int bit = SudokuHelper.BitFromChar(cell.Value);
+                        int boxIdx = BoxIndex(row, col);
+                        bool isDuplicate = (checkRowUsed[row] & bit) != 0 ||
+                                           (checkColUsed[col] & bit) != 0 ||
+                                           (checkBoxUsed[boxIdx] & bit) != 0;
+                        if (isDuplicate)
+                            return false;
+                        checkRowUsed[row] |= bit;
+                        checkColUsed[col] |= bit;
+                        checkBoxUsed[boxIdx] |= bit;
+                    }
+                }
+            }
+
+            return true;
+        }
 
         public void PrintBoard()
         {
