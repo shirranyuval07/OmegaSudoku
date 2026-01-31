@@ -28,6 +28,7 @@ namespace OmegaSudoku
 
         bool HasEmptyCells { get; }
 
+
         int BoxIndex(int row, int col);
         void InitializeBoard(string boardString);
         SquareCell GetBestCell();

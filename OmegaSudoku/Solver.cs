@@ -11,9 +11,10 @@ namespace OmegaSudoku
 
         public static bool Solve(ISudokuBoard board)
         {
-              return Solves_Small(board, new Stack<Move>());
+              return Solves(board, new Stack<Move>());
         }
-        public static bool Solves_Small(ISudokuBoard board,  Stack<Move> forcedMoves)
+
+        public static bool Solves(ISudokuBoard board,  Stack<Move> forcedMoves)
         {
             int checkpointMove = forcedMoves.Count;
             ConstraintPropagations.FillAllSingles(forcedMoves, board);
@@ -41,7 +42,7 @@ namespace OmegaSudoku
                 }
                 ConstraintPropagations.FillAffectedSingles(cell.Row,cell.Col,forcedMoves, board);
 
-                if (Solves_Small(board,forcedMoves))
+                if (Solves(board,forcedMoves))
                     return true;
 
                 board.RemoveNumbers(forcedMoves,checkpointGuess);

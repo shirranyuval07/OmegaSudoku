@@ -14,10 +14,13 @@ namespace OmegaSudoku
         public static string symbols = "123456789";
         public static char emptyCell = '0';
 
+        // Mappings between characters and their corresponding indices
         public static Dictionary<char, int> CharToIndex;
         public static Dictionary<int, char> IndexToChar;
 
-
+        /// <summary>
+        /// initializes the symbol mappings based on the current board length. (for generic reasons from 4x4 to 25x25)
+        /// </summary>
         public static void SetSymbol()
         {
             if (boardLen == 4)

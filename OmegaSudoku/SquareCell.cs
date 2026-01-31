@@ -32,52 +32,50 @@ namespace OmegaSudoku
 
 
         private char value { get; set; }
+        /// <summary>
+        /// Initializes a new instance of the SquareCell class with the specified row, column, and cell value.
+        /// </summary>
+        /// <param name="row">The zero-based row index of the cell within the board.</param>
+        /// <param name="col">The zero-based column index of the cell within the board.</param>
+        /// <param name="value">The character value to assign to the cell. Typically represents the cell's current state or content.</param>
         public SquareCell(int row, int col, char value)
         {
             this.row = row;
             this.col = col;
             this.value = value;
             this.possibleMask = value == Constants.emptyCell? (1 << Constants.boardLen) - 1: 0;
-           // InitializeNeighbors();
 
-        }
-        public SquareCell(SquareCell cell)
-        {
-            this.row = cell.row;
-            this.col = cell.col;
-            this.value = cell.value;
-            this.possibleMask = cell.possibleMask;
-           // InitializeNeighbors();
         }
 
         
 
-
+        /// <summary>
+        /// Removes the specified value from the set of possible values for this cell.
+        /// </summary>
+        /// <remarks>If the specified value is not currently a possible value or represents an empty cell,
+        /// the method does not modify the set and returns false.</remarks>
+        /// <param name="value">The value to remove from the set of possible values. Must not be the designated empty cell character.</param>
+        /// <returns>true if the value was a possible value and was removed; otherwise, false.</returns>
         public bool RemovePossibleValue(char value)
         {
-            if (value == Constants.emptyCell) return false;
+            bool flag = true;
+            if (value == Constants.emptyCell) flag = false;
 
             int bit = SudokuHelper.BitFromChar(value);
-            if ((possibleMask & bit) == 0) return false;
+            if ((possibleMask & bit) == 0) flag = false;
 
             possibleMask = SudokuHelper.ClearBit(possibleMask,bit);
             PossibleCount--;
-            return true;
+            return flag;
         }
 
 
-        public bool AddPossibleValue(char val)
-        {
-            if (val == Constants.emptyCell) return false;
 
-            int bit = SudokuHelper.BitFromChar(val);
-            bool changed = (possibleMask & bit) == 0;
-
-            possibleMask = SudokuHelper.AddBit(possibleMask,bit);
-            if (changed) PossibleCount++;
-            return changed;
-        }
-
+        /// <summary>
+        /// Determines whether the set contains the specified Sudoku value.
+        /// </summary>
+        /// <param name="value">The character representing the Sudoku value to locate in the set.</param>
+        /// <returns>true if the set contains the specified value; otherwise, false.</returns>
         public bool Contains(char value)
         {
             int bit = SudokuHelper.BitFromChar(value);
@@ -100,26 +98,16 @@ namespace OmegaSudoku
             get { return value; }
             set { this.value = value; }
         }
-        public override string ToString()
-        {
-            return "(" + row + "," + col + ")" + " And its value is: " + value;
-        }
+        /// <summary>
+        /// Determines whether the current state represents a failure condition.
+        /// </summary>
+        /// <returns><see langword="true"/> if the current state is considered failed; otherwise, <see langword="false"/>.</returns>
         public bool Failed()
         {
             return possibleMask == 0;
         }
 
-        public override bool Equals(object obj)
-        {
-            if (obj is SquareCell other)
-                return Row == other.Row && Col == other.Col;
-            return false;
-        }
-
-        public override int GetHashCode()
-        {
-            return Row * 31 + Col;
-        }
+       
 
     }
 }

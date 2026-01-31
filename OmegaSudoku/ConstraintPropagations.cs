@@ -9,6 +9,21 @@ namespace OmegaSudoku
 {
     static class ConstraintPropagations
     {
+
+        /// <summary>
+        /// Attempts to fill all cells in the Sudoku board that can be determined by naked or hidden singles, applying
+        /// moves until no further progress can be made.
+        /// </summary>
+        /// <remarks>This method repeatedly searches for naked singles (cells with only one possible
+        /// value) and hidden singles (values that can only go in one cell within a unit) and fills them. The process
+        /// continues until no further singles can be found. The board is modified in place, and all moves are recorded
+        /// in the provided stack. This method does not guarantee that the puzzle will be completely solved, only that
+        /// all singles are filled.</remarks>
+        /// <param name="squareCells">A stack used to record each move made when placing a number in a cell. Moves are pushed onto this stack as
+        /// they are applied.</param>
+        /// <param name="board">The Sudoku board on which to perform the single-candidate filling operations. Must provide access to empty
+        /// cells and support placing numbers.</param>
+        /// <returns>true if at least one cell was filled during the operation; otherwise, false.</returns>
         public static bool FillAllSingles(Stack<Move> squareCells, ISudokuBoard board)
         {
             bool progress = true;
@@ -64,6 +79,19 @@ namespace OmegaSudoku
             return progress;
         }
 
+        /// <summary>
+        /// Attempts to fill all affected single-candidate cells adjacent to the specified cell on the Sudoku board,
+        /// propagating as new singles are created.
+        /// </summary>
+        /// <remarks>This method examines all empty neighbor cells of the specified cell and fills any
+        /// that are singles (cells with only one possible candidate), continuing recursively as new singles are
+        /// created. It is typically used after placing a value to propagate deterministic fills. The stack provided in
+        /// squareCells will be updated with each move made by this method.</remarks>
+        /// <param name="row">The zero-based row index of the starting cell.</param>
+        /// <param name="col">The zero-based column index of the starting cell.</param>
+        /// <param name="squareCells">A stack used to record moves for undo or tracking purposes. Each placed value is pushed onto this stack.</param>
+        /// <param name="board">The Sudoku board on which to perform the operation. Must not be null.</param>
+        /// <returns>true if at least one cell was filled during the operation; otherwise, false.</returns>
         public static bool FillAffectedSingles(int row, int col, Stack<Move> squareCells, ISudokuBoard board)
         {
 
