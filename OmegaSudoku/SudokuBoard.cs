@@ -106,13 +106,13 @@ namespace OmegaSudoku
                 throw new InvalidPuzzleException("The provided board string is null or empty.");
             double sqrtLen = Math.Sqrt(boardString.Length);
             if(sqrtLen % 1 != 0)
-                throw new InvalidPuzzleException("The provided board string length is not a perfect square.");
+                throw new InvalidBoardLength("The provided board string length is not a perfect square.");
 
             Constants.boardLen = (int)sqrtLen;
             Constants.SetSymbol();
             double sqrtBoxLen = Math.Sqrt(Constants.boardLen);
             if(sqrtBoxLen % 1 != 0)
-                throw new InvalidPuzzleException("The board length does not have an integer square root, invalid for Sudoku.");
+                throw new InvalidBoardLength("The board length does not have an integer square root, invalid for Sudoku.");
 
             boxLen = (int)sqrtBoxLen;
 

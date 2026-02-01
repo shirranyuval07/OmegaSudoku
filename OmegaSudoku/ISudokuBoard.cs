@@ -33,6 +33,7 @@ namespace OmegaSudoku
         void InitializeBoard(string boardString);
         SquareCell GetBestCell();
 
+
         bool PlaceNumber(int row, int col, char value, Stack<Move> moves);
 
         void RemoveNumbers(Stack<Move> moves, int checkpoint);

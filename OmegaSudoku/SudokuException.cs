@@ -24,5 +24,14 @@ namespace OmegaSudoku
         {
         }
     }
+    class InvalidBoardLength : SudokuException
+    {
+        public InvalidBoardLength(string message) : base(message)
+        { 
+        }
+        public InvalidBoardLength(string message, Exception inner) : base(message, inner)
+        {
+        }
+    }
 
 }

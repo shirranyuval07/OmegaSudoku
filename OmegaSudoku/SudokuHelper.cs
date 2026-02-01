@@ -61,7 +61,10 @@ namespace OmegaSudoku
         {
             if (value != Constants.emptyCell && (!Constants.CharToIndex.ContainsKey(value) || Constants.CharToIndex[value] >= boardLen))
             {
-                throw new InvalidPuzzleException($"Invalid character '{value}' for Sudoku board of size {boardLen}x{boardLen}.");
+                if (value == 'Ω')
+                    throw new InvalidPuzzleException($"Invalid puzzle {value} , that sign sure is cool though!");
+                else
+                    throw new InvalidPuzzleException($"Invalid character '{value}' for Sudoku board of size {boardLen}x{boardLen}.");
             }
         }
 

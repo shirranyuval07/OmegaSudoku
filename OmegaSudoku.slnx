@@ -1,8 +1,4 @@
 <Solution>
-  <Folder Name="/Solution Items/">
-    <File Path="../../Downloads/sudoku.csv" />
-    <File Path="OmegaSudoku/bin/Debug/17_clue.txt" />
-  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/OmegaSudoku.Tests.Unit/OmegaSudoku.Tests.Unit.csproj" Id="72c3d410-7598-462d-a166-b64ea34ed8f8" />
   </Folder>
