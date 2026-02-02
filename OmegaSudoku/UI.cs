@@ -22,6 +22,7 @@ namespace OmegaSudoku
             Console.WriteLine("4. Put board into file (between 4x4 to 25x25)");
             Console.WriteLine("5. Check 50k hard 9x9 boards.");
             Console.WriteLine("6. Break from the app");
+            Console.WriteLine("C. Clear Console");
             Console.WriteLine("Enter 'menu' to look at the menu again");
             while (true)
             {
@@ -53,6 +54,12 @@ namespace OmegaSudoku
                             Console.WriteLine("Thank you for using Omega Sudoku Solver");
                             break;
                     }
+                    case "C":
+                        Console.Clear();
+                        Console.Write("\x1b[3J");
+                        Console.WriteLine("Welcome back to the menu. Press 'menu' to look at the menu again");
+                        break;
+
                     case "menu":
                     {
                         Console.WriteLine("Welcome! What would you like to do?");
@@ -67,7 +74,7 @@ namespace OmegaSudoku
                     }
                     default:
                     {
-                        Console.WriteLine("Insert a number 1-5 !");
+                        Console.WriteLine("Insert a correct Input !");
                         break;
                     }
                        
@@ -79,7 +86,7 @@ namespace OmegaSudoku
 
         public static void StartSudokuSolver()
         {
-            Console.WriteLine("Welcome to Omega Sudoku! \n enter HALAS to stop");
+            Console.WriteLine("Welcome to Omega Sudoku! \n enter HALAS to stop \n OMEGA - is the key");
             int count = 0;
             long start = 0;
             long end = 0;
@@ -148,7 +155,7 @@ namespace OmegaSudoku
             // Load puzzles
             List<string> puzzles = new List<string>();
             using (var reader = new StreamReader(
-                @"C:\Users\Owner\Yuval_Omega\OmegaSudoku\OmegaSudoku\bin\Debug\sudoku.csv"))
+                @"C:\Users\Owner\Yuval_Omega\OmegaSudoku\OmegaSudoku\bin\Debug\17_clue.txt"))
             {
                 while (!reader.EndOfStream)
                 {
@@ -174,8 +181,8 @@ namespace OmegaSudoku
 
                 count++;
 
-                // Progress every 100k puzzles
-                if (count % 100000 == 0)
+                // Progress every 10k puzzles
+                if (count % 10000 == 0)
                 {
                     double elapsedSec = totalSw.Elapsed.TotalSeconds;
                     double rate = count / elapsedSec;
@@ -303,21 +310,14 @@ namespace OmegaSudoku
                     TimeSpan elapsed = TimeSpan.FromSeconds((end - start) / (double)Stopwatch.Frequency);
                     Console.WriteLine($"Time: {elapsed:mm\\:ss\\.ffffff}");
 
-                    Console.WriteLine("Would you like to clear the console? (Y/N)");
+                    Console.WriteLine("Would you like to clear the console? (Y/any other key)");
                     string clear = Console.ReadLine();
-                    while (true)
+                    if(clear == "Y" || clear == "y")
                     {
-                        if (clear == "Y")
-                        {
-                            Console.Clear();
-                            Console.Write("\x1b[3J");
-                            break;
-                        }
-                        else if (clear != "N")
-                            Console.WriteLine("Must Be Y Or N");
-                        else
-                            break;
+                        Console.Clear();
+                        Console.Write("\x1b[3J");
                     }
+                    
                 }
                 catch (SudokuException ex)
                 {
@@ -355,7 +355,7 @@ namespace OmegaSudoku
                     cellsToRemove = 200;
                     break;
                 case 25:
-                    cellsToRemove = 500;
+                    cellsToRemove = 580;
                     break;
                 default:
                     cellsToRemove = (int)(totalCells * 0.60);

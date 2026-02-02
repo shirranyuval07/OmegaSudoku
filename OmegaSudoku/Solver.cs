@@ -11,7 +11,8 @@ namespace OmegaSudoku
 
         public static bool Solve(ISudokuBoard board)
         {
-              return Solves(board, new Stack<Move>());
+            Stack<Move> moves = new Stack<Move>();
+            return Solves(board, moves);
         }
 
         public static bool Solves(ISudokuBoard board,  Stack<Move> forcedMoves)

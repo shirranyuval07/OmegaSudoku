@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Numerics;
 using System.Threading.Tasks;
+using System.Numerics;
 
 namespace OmegaSudoku
 {
@@ -29,6 +30,7 @@ namespace OmegaSudoku
         
         public static int IndexFromBit(int bit)
         {
+            
             int index = 0;
             while (bit > 1)
             {
