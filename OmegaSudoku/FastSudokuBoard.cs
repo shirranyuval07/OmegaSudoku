@@ -364,7 +364,7 @@ namespace OmegaSudoku
                 int bit = SudokuHelper.LowestBit(mask);
                 //clear lowest bit
                 mask ^= bit;
-                int d = SudokuHelper.IndexFromBit(bit);
+                int d = SudokuHelper.BitToIndex(bit);
                 RowCounts[r, d] += delta;
                 ColCounts[c, d] += delta;
                 BoxCounts[b, d] += delta;

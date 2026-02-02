@@ -282,7 +282,7 @@ namespace OmegaSudoku
             {
                 int bit = mask & -mask;
                 mask ^= bit;           
-                int d = SudokuHelper.IndexFromBit(bit);
+                int d = SudokuHelper.BitToIndex(bit);
 
                 RowCounts[row, d] += delta;
                 ColCounts[col, d] += delta;

@@ -11,16 +11,9 @@ namespace OmegaSudoku
     static class SudokuHelper
     {
         public static int LowestBit(int n) => n & -n;
-        public static int LowestBitIndex(int mask)
+        public static int BitToIndex(int mask)
         {
-            int bit = LowestBit(mask);
-            int index = 0;
-            while(bit > 1)
-            {
-                bit >>= 1;
-                index++;
-            }
-            return index;
+            return BitOperations.TrailingZeroCount((uint)mask);
         }
         public static int ClearLowestBit(int n) => n &=  n - 1;
 
@@ -28,21 +21,9 @@ namespace OmegaSudoku
 
         public static int AddBit(int n, int bit) => n |= bit;
         
-        public static int IndexFromBit(int bit)
-        {
-            
-            int index = 0;
-            while (bit > 1)
-            {
-                bit >>= 1;
-                index++;
-            }
-            return index;
-        }
         public static char MaskToChar(int mask)
         {
-            int index = LowestBitIndex(mask);
-            return Constants.IndexToChar[index];
+            return Constants.IndexToChar[BitToIndex(mask)];
         }
         public static int BitFromChar(char value) => 1 << Constants.CharToIndex[value];
 
@@ -50,13 +31,7 @@ namespace OmegaSudoku
         //counting number of bits that are "on"
         public static int CountBits(int n)
         {
-            int count = 0;
-            while (n > 0)
-            {
-                n &= (n - 1);
-                count++;
-            }
-            return count;
+            return BitOperations.PopCount((uint)n);
         }
 
         public static void ValidateChar(char value, int boardLen)
