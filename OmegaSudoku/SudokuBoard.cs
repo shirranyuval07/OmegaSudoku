@@ -102,8 +102,8 @@ namespace OmegaSudoku
         /// valid Sudoku grid size, or represents an invalid Sudoku board.</exception>
         public SudokuBoard(string boardString)
         {
-            if(boardString == null || boardString == "")
-                throw new InvalidPuzzleException("The provided board string is null or empty.");
+            if(boardString == null || boardString == "" || boardString.Length == 1)
+                throw new InvalidPuzzleException("The provided board string is null or empty or single.");
             double sqrtLen = Math.Sqrt(boardString.Length);
             if(sqrtLen % 1 != 0)
                 throw new InvalidBoardLength("The provided board string length is not a perfect square.");

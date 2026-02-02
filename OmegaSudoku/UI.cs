@@ -13,6 +13,69 @@ namespace OmegaSudoku
 {
     static class UI
     {
+        public static void Start()
+        {
+            Console.WriteLine("Welcome! What would you like to do?");
+            Console.WriteLine("1. Solve a sudoku");
+            Console.WriteLine("2. Generate and solve a sudoku board");
+            Console.WriteLine("3. Read From file");
+            Console.WriteLine("4. Put board into file (between 4x4 to 25x25)");
+            Console.WriteLine("5. Check 50k hard 9x9 boards.");
+            Console.WriteLine("6. Break from the app");
+            Console.WriteLine("Enter 'menu' to look at the menu again");
+            while (true)
+            {
+                string input = Console.ReadLine();
+                switch (input)
+                {
+                    case "1":
+                        StartSudokuSolver();
+                        Console.WriteLine("Welcome back to the menu. Press 'menu' to look at the menu again");
+                        break;
+                    case "2":
+                        StartSudokuSolverGenerated();
+                        Console.WriteLine("Welcome back to the menu. Press 'menu' to look at the menu again");
+                        break;
+                    case "3":
+                        ReadFromFile();
+                        Console.WriteLine("Welcome back to the menu. Press 'menu' to look at the menu again");
+                        break;
+                    case "4":
+                        StartInputIntoFile();
+                        Console.WriteLine("Welcome back to the menu. Press 'menu' to look at the menu again");
+                        break;
+                    case "5":
+                        StartSudokuSolver2();
+                        Console.WriteLine("Welcome back to the menu. Press 'menu' to look at the menu again");
+                        break;
+                    case "6":
+                    {
+                            Console.WriteLine("Thank you for using Omega Sudoku Solver");
+                            break;
+                    }
+                    case "menu":
+                    {
+                        Console.WriteLine("Welcome! What would you like to do?");
+                        Console.WriteLine("1. Solve a sudoku");
+                        Console.WriteLine("2. Generate and solve a sudoku board");
+                        Console.WriteLine("3. Read From file");
+                        Console.WriteLine("4. Put board into file and solve (between 4x4 to 25x25)");
+                        Console.WriteLine("5. Check 50k hard 9x9 boards.");
+                        Console.WriteLine("6. Break from the app");
+                        Console.WriteLine("Enter 'menu' to look at the menu again");
+                        break;
+                    }
+                    default:
+                    {
+                        Console.WriteLine("Insert a number 1-5 !");
+                        break;
+                    }
+                       
+                }
+                if (input == "6")
+                    break;
+            }
+        }
 
         public static void StartSudokuSolver()
         {
@@ -44,7 +107,7 @@ namespace OmegaSudoku
                         board = new SudokuBoard(input);
                     else
                     {
-                        double counter = input.Count(c => c == '0');
+                        double counter = input.Count(c => c == Constants.emptyCell);
                         Console.WriteLine((double)(counter /625));
                         if (counter == 625 || counter <= 625*0.95)
                         {
@@ -127,6 +190,61 @@ namespace OmegaSudoku
             Console.WriteLine($"Total time: {totalSw.Elapsed}");
             Console.WriteLine($"Average per puzzle: {totalSw.Elapsed.TotalMilliseconds / count:F6} ms");
         }
+        public static void StartInputIntoFile()
+        {
+            Console.WriteLine("Input string to put into the file. Enter HALAS to stop");
+            string filepath = "C:\\Users\\Owner\\Yuval_Omega\\OmegaSudoku\\OmegaSudoku\\bin\\Debug\\boards.txt";
+            while(true)
+            {
+                string input = Console.ReadLine();
+                if (input == "HALAS")
+                    break;
+                try
+                {
+                    SudokuBoard board = new SudokuBoard(input); //validate through creating a board
+                    File.WriteAllText(filepath, input);
+                    Console.WriteLine("String successfully written to file.");
+
+                }
+                catch (IOException ex)
+                {
+                    Console.WriteLine($"An error occurred: {ex.Message}");
+                }
+                catch (SudokuException ex)
+                {
+                    Console.WriteLine($"A Sudoku Board Exception occured: {ex.Message}");
+                }
+            }
+           
+        }
+        public static void ReadFromFile()
+        {
+            List<string> listA = new List<string>();
+
+            using (var reader = new StreamReader(@"C:\Users\Owner\Yuval_Omega\OmegaSudoku\OmegaSudoku\bin\Debug\boards.txt"))
+            {
+                while (!reader.EndOfStream)
+                {
+                    var line = reader.ReadLine();
+
+                    listA.Add(line);
+                }
+            }
+            foreach (string line in listA)
+            {
+                SudokuBoard board = new SudokuBoard(line);
+                board.PrintBoard();
+                bool solved = Solver.Solve(board);
+                if(solved)
+                {
+                    Console.WriteLine("solved succesfully");
+                    board.PrintBoard();
+                }
+                else
+                    Console.WriteLine("Failed to solve");
+
+            }
+        }
         public static void StartSudokuSolverGenerated()
         {
             Console.WriteLine("Welcome to Omega Sudoku!");
@@ -138,6 +256,10 @@ namespace OmegaSudoku
                 try
                 {
                     j++;
+                    Console.WriteLine("Do you wish to stop? (Y/any other key)");
+                    string answer = Console.ReadLine();
+                    if (answer == "Y")
+                        break;
                     Console.WriteLine("Give board size");
                     string s = UI.GeneratorNxN(int.Parse(Console.ReadLine()));
                     ISudokuBoard board = null;
@@ -146,7 +268,7 @@ namespace OmegaSudoku
                         board = new SudokuBoard(s);
                     else
                     {
-                        double counter = s.Count(c => c == '0');
+                        double counter = s.Count(c => c == Constants.emptyCell);
                         Console.WriteLine((double)(counter / 625));
                         if (counter <= 0.95 * 625) // alot of try and error
                         {
@@ -157,15 +279,13 @@ namespace OmegaSudoku
                             board = new SudokuBoard(s);
                         }
                     }
-                    double ratio = (double)s.Count(c => c == '0') / s.Length;
+                    double ratio = (double)s.Count(c => c == Constants.emptyCell) / s.Length;
                     Console.WriteLine($"Difficulty Ratio: {ratio:P2}");
 
 
                     Console.WriteLine("--- Initial Board ---");
                     board.PrintBoard();
 
-                    Console.WriteLine("Look at the board for a second");
-                    Thread.Sleep(1000);
                     long start = Stopwatch.GetTimestamp();
                     bool solved = Solver.Solve(board);
                     long end = Stopwatch.GetTimestamp();
@@ -175,7 +295,7 @@ namespace OmegaSudoku
                         Console.WriteLine("\n--- SOLVED ---");
                         board.PrintBoard();
                     }
-                    else
+                    else //shouldn't happen. sanity check
                     {
                         Console.WriteLine("\n!!! FAILED TO SOLVE !!!");
                     }
@@ -183,12 +303,21 @@ namespace OmegaSudoku
                     TimeSpan elapsed = TimeSpan.FromSeconds((end - start) / (double)Stopwatch.Frequency);
                     Console.WriteLine($"Time: {elapsed:mm\\:ss\\.ffffff}");
 
-                    Console.WriteLine("\nWaiting 5 seconds...");
-                    Thread.Sleep(5000);
-                    Console.Write("\x1b[3J");
-                    Console.Clear();
-                    Thread.Sleep(1000);
-
+                    Console.WriteLine("Would you like to clear the console? (Y/N)");
+                    string clear = Console.ReadLine();
+                    while (true)
+                    {
+                        if (clear == "Y")
+                        {
+                            Console.Clear();
+                            Console.Write("\x1b[3J");
+                            break;
+                        }
+                        else if (clear != "N")
+                            Console.WriteLine("Must Be Y Or N");
+                        else
+                            break;
+                    }
                 }
                 catch (SudokuException ex)
                 {
@@ -205,7 +334,7 @@ namespace OmegaSudoku
 
             int totalCells = boardLength * boardLength;
 
-            string emptyBoard = new string('0', totalCells);
+            string emptyBoard = new string(Constants.emptyCell, totalCells);
             SudokuBoard board = new SudokuBoard(emptyBoard);
             bool solved = Solver.Solve(board);
             if(!solved)
@@ -254,95 +383,10 @@ namespace OmegaSudoku
             for (int i = 0; i < cellsToRemove; i++)
             {
                 var coord = allCoordinates[i];
-                board.board[coord.Item1, coord.Item2].Value = '0';
+                board.board[coord.Item1, coord.Item2].Value = Constants.emptyCell;
             }
 
             return board.ToString();
-        }
-        public static void SolveSudokuTestABunchOf9x9()
-        {
-
-            List<string> listPuzzle = new List<string>();
-            List<string> listSol = new List<string>();
-            int i = 0;
-            using (var reader = new StreamReader(@"C:\Users\Owner\Yuval_Omega\OmegaSudoku\OmegaSudoku\bin\Debug\sudoku.csv"))
-            {
-                while (!reader.EndOfStream)
-                {
-                    var line = reader.ReadLine();
-
-                    var strings = line.Split(',');
-
-                    listPuzzle.Add(strings[0]);
-                    listSol.Add(strings[1]);
-                }
-            }
-
-            var puzzleAndSol = listPuzzle.Zip(listSol, (puzzle1, sol1) => new { puzzle1, sol1 });
-            TimeSpan maxTimeSpan = TimeSpan.Zero;
-            TimeSpan overall = TimeSpan.Zero;
-            string longestPuzzle = "";
-            Console.WriteLine();
-            long count = 0;
-            string puzzle = "";
-            string sol = "";
-            long start = 0;
-            long end = 0;
-            long elapsedTicks = 0;
-            TimeSpan elapsed = TimeSpan.Zero;
-            Stopwatch stopwatch = new Stopwatch();
-            foreach (var item in puzzleAndSol)
-            {
-                puzzle = item.puzzle1;
-                sol = item.sol1;
-                start = 0;
-                end = 0;
-                elapsedTicks = 0;
-                elapsed = TimeSpan.Zero;
-                stopwatch = new Stopwatch();
-                try
-                {
-                    start = Stopwatch.GetTimestamp();
-                    // Arrange
-                    SudokuBoard board = new SudokuBoard(puzzle);
-                    // Act
-                    if (!board.IsValidBoard())
-                        continue;
-                    Solver.Solve(board);
-                    if (board.ToString() != sol)
-                        throw new SudokuException("TestSolveSudoku failed: Sudoku solution is incorrect");
-                    end = Stopwatch.GetTimestamp();
-                    elapsedTicks = end - start;
-                    elapsed = TimeSpan.FromSeconds(elapsedTicks / (double)Stopwatch.Frequency);
-                    Console.Write("Number: " + count++ + " ,time is: " + elapsed.ToString(@"mm\:ss\.ffffff") + "\r");
-                    overall += elapsed;
-                    if (elapsed > maxTimeSpan)
-                    {
-                        maxTimeSpan = elapsed;
-                        longestPuzzle = puzzle;
-                    }
-
-                    if (elapsed.TotalSeconds > 1)
-                        throw new SudokuException("TestSolveSudoku failed: Sudoku Took too long");
-
-                }
-                catch (SudokuException ex)
-                {
-                    // Assert
-                    Console.WriteLine(puzzle);
-                    throw new SudokuException("TestSolveSudoku failed: An exception occurred while solving the puzzle.", ex);
-                }
-            }
-
-            Console.WriteLine("Longest puzzle is {0} \n Run time is: {1}", longestPuzzle, maxTimeSpan);
-
-            Console.WriteLine("Overall time for 9,000,000 puzzles: " + overall.ToString(@"mm\:ss\.ffffff"));
-
-            Console.WriteLine("Average time is: " + overall.TotalMilliseconds / 9000000 + " milliseconds");
-
-
-            Console.WriteLine("Thank you for using Omega Sudoku Solver!");
-
         }
     }
 }
