@@ -1,11 +1,13 @@
-﻿using System;
+﻿using OmegaSudoku.Core;
+using OmegaSudoku.Utils;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OmegaSudoku
+namespace OmegaSudoku.Logic
 {
     static class ConstraintPropagations
     {

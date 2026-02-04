@@ -1,4 +1,8 @@
-﻿using System;
+﻿using OmegaSudoku.Core;
+using OmegaSudoku.Exceptions;
+using OmegaSudoku.Logic;
+using OmegaSudoku.Utils;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,7 +13,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace OmegaSudoku
+namespace OmegaSudoku.UI
 {
     static class UI
     {
@@ -115,8 +119,8 @@ namespace OmegaSudoku
                     else
                     {
                         double counter = input.Count(c => c == Constants.emptyCell);
-                        Console.WriteLine((double)(counter /625));
-                        if (counter == 625 || counter <= 625*0.95)
+                        Console.WriteLine((double)(counter /input.Length));
+                        if (counter == input.Length || counter <= input.Length *0.95)
                         {
                             board = new FastSudokuBoard(input);
                         }
@@ -132,7 +136,7 @@ namespace OmegaSudoku
                     start = Stopwatch.GetTimestamp();
                     bool solved = Solver.Solve(board);
                     if(!solved)
-                        throw new SudokuException("Sudoku could not be solved");
+                        throw new UnsolvableSudokuException("Sudoku could not be solved");
                     Console.WriteLine("after Solving: ");
                     board.PrintBoard();
                     end = Stopwatch.GetTimestamp();
@@ -154,8 +158,9 @@ namespace OmegaSudoku
 
             // Load puzzles
             List<string> puzzles = new List<string>();
-            using (var reader = new StreamReader(
-                @"C:\Users\Owner\Yuval_Omega\OmegaSudoku\OmegaSudoku\bin\Debug\17_clue.txt"))
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string filePath = Path.Combine(baseDir, "FilesData", "17_clue.txt");
+            using (var reader = new StreamReader(filePath))
             {
                 while (!reader.EndOfStream)
                 {
@@ -174,7 +179,7 @@ namespace OmegaSudoku
 
             foreach (var puzzle in puzzles)
             {
-                // Allocate new board each puzzle (no LoadFromString)
+                // Allocate new board each puzzle
                 SudokuBoard board = new SudokuBoard(puzzle);
 
                 Solver.Solve(board);
@@ -200,8 +205,9 @@ namespace OmegaSudoku
         public static void StartInputIntoFile()
         {
             Console.WriteLine("Input string to put into the file. Enter HALAS to stop");
-            string filepath = "C:\\Users\\Owner\\Yuval_Omega\\OmegaSudoku\\OmegaSudoku\\bin\\Debug\\boards.txt";
-            while(true)
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string filePath = Path.Combine(baseDir, "FilesData", "17_clue.txt");
+            while (true)
             {
                 string input = Console.ReadLine();
                 if (input == "HALAS")
@@ -209,7 +215,7 @@ namespace OmegaSudoku
                 try
                 {
                     SudokuBoard board = new SudokuBoard(input); //validate through creating a board
-                    File.WriteAllText(filepath, input);
+                    File.WriteAllText(filePath, input);
                     Console.WriteLine("String successfully written to file.");
 
                 }
@@ -228,7 +234,9 @@ namespace OmegaSudoku
         {
             List<string> listA = new List<string>();
 
-            using (var reader = new StreamReader(@"C:\Users\Owner\Yuval_Omega\OmegaSudoku\OmegaSudoku\bin\Debug\boards.txt"))
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string filePath = Path.Combine(baseDir, "FilesData", "boards.txt");
+            using (var reader = new StreamReader(filePath))
             {
                 while (!reader.EndOfStream)
                 {
@@ -276,8 +284,8 @@ namespace OmegaSudoku
                     else
                     {
                         double counter = s.Count(c => c == Constants.emptyCell);
-                        Console.WriteLine((double)(counter / 625));
-                        if (counter <= 0.95 * 625) // alot of try and error
+                        Console.WriteLine((double)(counter / s.Length));
+                        if (counter <= 0.95 * s.Length) // alot of try and error
                         {
                             board = new FastSudokuBoard(s);
                         }
@@ -338,7 +346,7 @@ namespace OmegaSudoku
             SudokuBoard board = new SudokuBoard(emptyBoard);
             bool solved = Solver.Solve(board);
             if(!solved)
-                throw new Exception("Generated board is unsolvable");
+                throw new UnsolvableSudokuException("Generated board is unsolvable");
             Random rnd = new Random();
 
             int cellsToRemove;

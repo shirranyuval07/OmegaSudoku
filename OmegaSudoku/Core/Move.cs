@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OmegaSudoku
+namespace OmegaSudoku.Core
 {
     readonly struct Move
     {

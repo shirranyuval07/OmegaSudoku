@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OmegaSudoku
+namespace OmegaSudoku.Utils
 {
     static class Constants
     {

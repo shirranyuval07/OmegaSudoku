@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OmegaSudoku
+namespace OmegaSudoku.Core
 {
     interface ISudokuBoard
     {
@@ -39,7 +39,7 @@ namespace OmegaSudoku
         void RemoveNumbers(Stack<Move> moves, int checkpoint);
         void UpdateCounts(int r, int c, int mask, int delta);
 
-        void DecrementSingleCount(int r, int c, int d);
+        void DecrementSingleCount(int r, int c, char d);
 
         bool IsHiddenSingle(int r, int c, char v);
 

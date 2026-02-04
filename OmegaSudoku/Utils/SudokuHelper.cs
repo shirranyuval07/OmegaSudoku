@@ -6,7 +6,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using System.Numerics;
 
-namespace OmegaSudoku
+namespace OmegaSudoku.Utils
 {
     static class SudokuHelper
     {
@@ -39,9 +39,9 @@ namespace OmegaSudoku
             if (value != Constants.emptyCell && (!Constants.CharToIndex.ContainsKey(value) || Constants.CharToIndex[value] >= boardLen))
             {
                 if (value == 'Ω')
-                    throw new InvalidPuzzleException($"Invalid puzzle {value} , that sign sure is cool though!");
+                    throw new Exceptions.InvalidCharacterException(value);
                 else
-                    throw new InvalidPuzzleException($"Invalid character '{value}' for Sudoku board of size {boardLen}x{boardLen}.");
+                    throw new Exceptions.InvalidCharacterException(value,boardLen);
             }
         }
 

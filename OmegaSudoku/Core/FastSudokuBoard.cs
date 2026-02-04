@@ -1,8 +1,10 @@
-﻿using System;
+﻿using OmegaSudoku.Exceptions;
+using OmegaSudoku.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace OmegaSudoku
+namespace OmegaSudoku.Core
 {
     class FastSudokuBoard : ISudokuBoard
     {
@@ -104,13 +106,13 @@ namespace OmegaSudoku
                 throw new InvalidPuzzleException("The provided board string is null or empty.");
             double sqrtLen = Math.Sqrt(boardString.Length);
             if (sqrtLen % 1 != 0)
-                throw new InvalidBoardLength("The provided board string length is not a perfect square.");
+                throw new InvalidBoardLengthException("The provided board string length is not a perfect square.");
 
             Constants.boardLen = (int)sqrtLen;
             Constants.SetSymbol();
             double sqrtBoxLen = Math.Sqrt(Constants.boardLen);
             if (sqrtBoxLen % 1 != 0)
-                throw new InvalidBoardLength("The board length does not have an integer square root, invalid for Sudoku.");
+                throw new InvalidBoardLengthException("The board length does not have an integer square root, invalid for Sudoku.");
 
             boxLen = (int)sqrtBoxLen;
             fullmask = (1 << Constants.boardLen) - 1;
@@ -274,6 +276,7 @@ namespace OmegaSudoku
             // Maintenance
             UpdateCounts(row, col, cell.PossibleMask, -1);
 
+            //set value and update appropriate attributes
             cell.Value = value;
             cell.PossibleMask = 0;
             EmptyCells.Remove(cell);
@@ -290,7 +293,7 @@ namespace OmegaSudoku
                 {
                     moves.Push(new Move(neighbor, neighbor.PossibleMask));
 
-                    DecrementSingleCount(neighbor.Row, neighbor.Col, Constants.CharToIndex[value]);
+                    DecrementSingleCount(neighbor.Row, neighbor.Col, value);
 
                     //clear bit
                     if (!neighbor.RemovePossibleValue(value))
@@ -329,15 +332,16 @@ namespace OmegaSudoku
                     colUsed[cell.Col] = SudokuHelper.ClearBit(colUsed[cell.Col], bit);
                     boxUsed[BoxIndex(cell.Row, cell.Col)] = SudokuHelper.ClearBit(boxUsed[BoxIndex(cell.Row, cell.Col)], bit);
 
-
+                    //set cell to empty.
                     cell.Value = Constants.emptyCell;
                     EmptyCells.Add(cell);
 
+                    //add 1 to count 
                     UpdateCounts(cell.Row, cell.Col, cell.PossibleMask, 1);
                 }
                 else
                 {
-                    // For unfilled cells, restore any bits that were removed
+                    // For unfilled cells, restore any bits that were removed.
                     int restoredBits = SudokuHelper.ClearBit(move.PreviousMask ,oldMask);
                     if (restoredBits != 0)
                         UpdateCounts(cell.Row, cell.Col, restoredBits, 1);
@@ -377,11 +381,13 @@ namespace OmegaSudoku
         /// <param name="r">The zero-based index of the row in which to decrement the digit count.</param>
         /// <param name="c">The zero-based index of the column in which to decrement the digit count.</param>
         /// <param name="d">The zero-based index of the digit whose count is to be decremented.</param>
-        private void DecrementSingleCount(int r, int c, int d)
+        private void DecrementSingleCount(int r, int c, char d)
         {
-            RowCounts[r, d]--;
-            ColCounts[c, d]--;
-            BoxCounts[BoxIndex(r, c), d]--;
+            int index = Constants.CharToIndex[d];
+
+            RowCounts[r, index]--;
+            ColCounts[c, index]--;
+            BoxCounts[BoxIndex(r, c), index]--;
         }
 
         /// <summary>
@@ -484,7 +490,7 @@ namespace OmegaSudoku
             UpdateCounts(r, c, mask, delta);
         }
 
-        void ISudokuBoard.DecrementSingleCount(int r, int c, int d)
+        void ISudokuBoard.DecrementSingleCount(int r, int c, char d)
         {
             DecrementSingleCount(r, c, d);
         }
