@@ -36,12 +36,24 @@ namespace OmegaSudoku.Utils
 
         public static void ValidateChar(char value, int boardLen)
         {
-            if (value != Constants.emptyCell && (!Constants.CharToIndex.ContainsKey(value) || Constants.CharToIndex[value] >= boardLen))
+            // 1. Check Empty Cell
+            if (value == Constants.emptyCell) return;
+
+            // 2. Check Array Bounds (Prevent IndexOutOfRange for weird characters)
+            // Constants.CharToIndex is size 128.
+            if (value >= Constants.CharToIndex.Length)
             {
-                if (value == 'Ω')
+                throw new Exceptions.InvalidCharacterException(value);
+            }
+            int index = Constants.CharToIndex[value];
+
+            // 4. Check Validity
+            if (index == -1 || index >= boardLen)
+            {
+                if (value == 'Ω') // Specific check you had
                     throw new Exceptions.InvalidCharacterException(value);
                 else
-                    throw new Exceptions.InvalidCharacterException(value,boardLen);
+                    throw new Exceptions.InvalidCharacterException(value, boardLen);
             }
         }
 

@@ -31,6 +31,8 @@ namespace OmegaSudoku.Core
 
         public SquareCell[] Neighbors { get; set; }
 
+        public int BoxIndex { get; private set; }
+
 
         private char value { get; set; }
         /// <summary>
@@ -45,7 +47,7 @@ namespace OmegaSudoku.Core
             this.col = col;
             this.value = value;
             this.possibleMask = value == Constants.emptyCell? (1 << Constants.boardLen) - 1: 0;
-
+            this.BoxIndex = (row / Constants.boxLen) * Constants.boxLen + (col / Constants.boxLen);
         }
 
         

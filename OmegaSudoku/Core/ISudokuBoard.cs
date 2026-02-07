@@ -8,13 +8,13 @@ namespace OmegaSudoku.Core
 {
     interface ISudokuBoard
     {
-        SquareCell[,] board {  get; set; }
+        SquareCell[] board {  get; set; }
         int boxLen {  get; set; }
 
         // Hidden Single Counts
-        int[,] RowCounts {  get; set; }
-        int[,] ColCounts {  get; set; }
-        int[,] BoxCounts {  get; set; }
+        int[] RowCounts {  get; set; }
+        int[] ColCounts {  get; set; }
+        int[] BoxCounts {  get; set; }
 
         // Global Constraints
         int[] rowUsed {  get; set; }
@@ -29,7 +29,6 @@ namespace OmegaSudoku.Core
         bool HasEmptyCells { get; }
 
 
-        int BoxIndex(int row, int col);
         void InitializeBoard(string boardString);
         SquareCell GetBestCell();
 

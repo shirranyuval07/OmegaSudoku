@@ -15,8 +15,8 @@ namespace OmegaSudoku.Utils
         public static char emptyCell = '0';
 
         // Mappings between characters and their corresponding indices
-        public static Dictionary<char, int> CharToIndex;
-        public static Dictionary<int, char> IndexToChar;
+        public static int[] CharToIndex;
+        public static char[] IndexToChar;
 
         /// <summary>
         /// initializes the symbol mappings based on the current board length. (for generic reasons from 4x4 to 25x25)
@@ -43,13 +43,15 @@ namespace OmegaSudoku.Utils
                 symbols = "123456789ABCDEFGHIJKLMNOP";
                 boxLen = 5;
             }
-            CharToIndex = new Dictionary<char, int>();
-            IndexToChar = new Dictionary<int, char>();
-
+            CharToIndex = new int[128]; // 128 should be enough to cover all ASCII characters
+            IndexToChar = new char[Constants.boardLen];
+            Array.Fill(CharToIndex, -1); // Initialize all entries to -1 to indicate invalid characters
+            char c = ' ';
             for (int i = 0; i < symbols.Length; i++)
             {
-                CharToIndex[symbols[i]] = i;
-                IndexToChar[i] = symbols[i];
+                c = symbols[i];
+                CharToIndex[c] = i;
+                IndexToChar[i] = c;
             }
         }
 

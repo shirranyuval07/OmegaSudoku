@@ -391,7 +391,7 @@ namespace OmegaSudoku.UI
             for (int i = 0; i < cellsToRemove; i++)
             {
                 var coord = allCoordinates[i];
-                board.board[coord.Item1, coord.Item2].Value = Constants.emptyCell;
+                board.board[coord.Item1*Constants.boardLen+ coord.Item2].Value = Constants.emptyCell;
             }
 
             return board.ToString();

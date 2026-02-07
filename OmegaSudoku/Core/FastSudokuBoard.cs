@@ -8,13 +8,14 @@ namespace OmegaSudoku.Core
 {
     class FastSudokuBoard : ISudokuBoard
     {
-        public SquareCell[,] board;
+        public SquareCell[] board;
         private int boxLen;
+        private int boardLen;
 
         // Hidden Single Counts
-        public int[,] RowCounts;
-        public int[,] ColCounts;
-        public int[,] BoxCounts;
+        public int[] RowCounts;
+        public int[] ColCounts;
+        public int[] BoxCounts;
 
         // Global Constraints
         private int[] rowUsed;
@@ -27,7 +28,7 @@ namespace OmegaSudoku.Core
         public int EmptyCount => EmptyCells.Count;
 
 
-        SquareCell[,] ISudokuBoard.board
+        SquareCell[] ISudokuBoard.board
         {
             get => board;
             set => board = value;
@@ -39,19 +40,19 @@ namespace OmegaSudoku.Core
             set => boxLen = value;
         }
 
-        int[,] ISudokuBoard.RowCounts
+        int[] ISudokuBoard.RowCounts
         {
             get => RowCounts;
             set => RowCounts = value;
         }
 
-        int[,] ISudokuBoard.ColCounts
+        int[] ISudokuBoard.ColCounts
         {
             get => ColCounts;
             set => ColCounts = value;
         }
 
-        int[,] ISudokuBoard.BoxCounts
+        int[] ISudokuBoard.BoxCounts
         {
             get => BoxCounts;
             set => BoxCounts = value;
@@ -118,16 +119,17 @@ namespace OmegaSudoku.Core
             fullmask = (1 << Constants.boardLen) - 1;
 
             int len = Constants.boardLen;
+            this.boardLen = len;
             rowUsed = new int[len];
             colUsed = new int[len];
             boxUsed = new int[len];
 
-            RowCounts = new int[len, len];
-            ColCounts = new int[len, len];
-            BoxCounts = new int[len, len];
+            RowCounts = new int[len* len];
+            ColCounts = new int[len* len];
+            BoxCounts = new int[len * len];
 
             EmptyCells = new HashSet<SquareCell>();
-            board = new SquareCell[len, len];
+            board = new SquareCell[len * len];
 
             InitializeBoard(boardString);
             int clues = Constants.boardLen * Constants.boardLen - EmptyCells.Count;
@@ -147,7 +149,6 @@ namespace OmegaSudoku.Core
         /// <param name="row">The zero-based row index of the cell.</param>
         /// <param name="col">The zero-based column index of the cell.</param>
         /// <returns>The zero-based index of the box containing the cell at the specified row and column.</returns>
-        public int BoxIndex(int row, int col) => (row / boxLen) * boxLen + (col / boxLen);
 
         /// <summary>
         /// Initializes the Sudoku board state from the specified string representation.
@@ -159,18 +160,19 @@ namespace OmegaSudoku.Core
         /// have a length equal to the total number of cells and use valid characters for the board size.</param>
         private void InitializeBoard(string boardString)
         {
+            SquareCell curr = null;
             for (int i = 0; i < Constants.boardLen * Constants.boardLen; i++)
             {
                 int r = i / Constants.boardLen;
                 int c = i % Constants.boardLen;
                 char val = boardString[i];
-                board[r, c] = new SquareCell(r, c, val);
+                curr = board[r*boardLen + c] = new SquareCell(r, c, val);
 
                 SudokuHelper.ValidateChar(val, Constants.boardLen);
 
                 if (val == Constants.emptyCell)
                 {
-                    EmptyCells.Add(board[r, c]);
+                    EmptyCells.Add(curr);
                 }
                 else
                 {
@@ -178,18 +180,18 @@ namespace OmegaSudoku.Core
                     //add bits.
                     rowUsed[r] |= bit;
                     colUsed[c] |= bit;
-                    boxUsed[BoxIndex(r, c)] |= bit;
-                    board[r, c].PossibleMask = 0;
+                    boxUsed[curr.BoxIndex] |= bit;
+                    curr.PossibleMask = 0;
                 }
             }
 
             for (int r = 0; r < Constants.boardLen; r++)
                 for (int c = 0; c < Constants.boardLen; c++)
-                    InitializeNeighbors(board[r, c]);
+                    InitializeNeighbors(board[r * boardLen + c]);
 
             foreach (var cell in EmptyCells)
             {
-                int used = rowUsed[cell.Row] | colUsed[cell.Col] | boxUsed[BoxIndex(cell.Row, cell.Col)];
+                int used = rowUsed[cell.Row] | colUsed[cell.Col] | boxUsed[cell.BoxIndex];
                 // Possible values are those not used in row, column, or box
                 cell.PossibleMask = fullmask & ~used; //clear used bits
                 UpdateCounts(cell.Row, cell.Col, cell.PossibleMask, 1);
@@ -209,14 +211,14 @@ namespace OmegaSudoku.Core
             int row = cell.Row, col = cell.Col;
             for (int k = 0; k < Constants.boardLen; k++)
             {
-                if (k != col) l.Add(board[row, k]);
-                if (k != row) l.Add(board[k, col]);
+                if (k != col) l.Add(board[row*boardLen+ k]);
+                if (k != row) l.Add(board[k * boardLen + col]);
             }
             int br = (row / boxLen) * boxLen, bc = (col / boxLen) * boxLen;
             for (int i = 0; i < boxLen; i++) for (int j = 0; j < boxLen; j++)
                 {
                     int nr = br + i, nc = bc + j;
-                    if (nr != row && nc != col) l.Add(board[nr, nc]);
+                    if (nr != row && nc != col) l.Add(board[nr * boardLen + nc]);
                 }
             cell.Neighbors = l.ToArray();
         }
@@ -268,7 +270,7 @@ namespace OmegaSudoku.Core
         /// results in an invalid state.</returns>
         public bool PlaceNumber(int row, int col, char value, Stack<Move> moves)
         {
-            SquareCell cell = board[row, col];
+            SquareCell cell = board[row * boardLen + col];
             int bit = SudokuHelper.BitFromChar(value);
 
             moves.Push(new Move(cell, cell.PossibleMask));
@@ -280,11 +282,6 @@ namespace OmegaSudoku.Core
             cell.Value = value;
             cell.PossibleMask = 0;
             EmptyCells.Remove(cell);
-
-            //add bits.
-            rowUsed[row] |= bit;
-            colUsed[col] |= bit;
-            boxUsed[BoxIndex(row, col)] |= bit;
 
             // Propagate
             foreach (SquareCell neighbor in cell.Neighbors)
@@ -326,12 +323,6 @@ namespace OmegaSudoku.Core
 
                 if (wasFilled)
                 {
-                    int bit = SudokuHelper.BitFromChar(cell.Value);
-                    //remove bits.
-                    rowUsed[cell.Row] = SudokuHelper.ClearBit(rowUsed[cell.Row], bit);
-                    colUsed[cell.Col] = SudokuHelper.ClearBit(colUsed[cell.Col], bit);
-                    boxUsed[BoxIndex(cell.Row, cell.Col)] = SudokuHelper.ClearBit(boxUsed[BoxIndex(cell.Row, cell.Col)], bit);
-
                     //set cell to empty.
                     cell.Value = Constants.emptyCell;
                     EmptyCells.Add(cell);
@@ -362,16 +353,16 @@ namespace OmegaSudoku.Core
         /// <param name="delta">The value to add to or subtract from the candidate counts. Typically 1 to increment or -1 to decrement.</param>
         private void UpdateCounts(int r, int c, int mask, int delta)
         {
-            int b = BoxIndex(r, c);
+            int b = board[r*boardLen+ c].BoxIndex;
             while (mask != 0)
             {
                 int bit = SudokuHelper.LowestBit(mask);
                 //clear lowest bit
                 mask ^= bit;
                 int d = SudokuHelper.BitToIndex(bit);
-                RowCounts[r, d] += delta;
-                ColCounts[c, d] += delta;
-                BoxCounts[b, d] += delta;
+                RowCounts[r*boardLen+ d] += delta;
+                ColCounts[c * boardLen + d] += delta;
+                BoxCounts[b * boardLen + d] += delta;
             }
         }
 
@@ -385,9 +376,9 @@ namespace OmegaSudoku.Core
         {
             int index = Constants.CharToIndex[d];
 
-            RowCounts[r, index]--;
-            ColCounts[c, index]--;
-            BoxCounts[BoxIndex(r, c), index]--;
+            RowCounts[r * boardLen + index]--;
+            ColCounts[c * boardLen + index]--;
+            BoxCounts[board[r*boardLen+c].BoxIndex*boardLen+ index]--;
         }
 
         /// <summary>
@@ -403,7 +394,7 @@ namespace OmegaSudoku.Core
         public bool IsHiddenSingle(int r, int c, char v)
         {
             int d = Constants.CharToIndex[v];
-            return RowCounts[r, d] == 1 || ColCounts[c, d] == 1 || BoxCounts[BoxIndex(r, c), d] == 1;
+            return RowCounts[r * boardLen + d] == 1 || ColCounts[c * boardLen + d] == 1 || BoxCounts[board[r * boardLen + c].BoxIndex *boardLen+ d] == 1;
         }
 
         /// <summary>
@@ -413,7 +404,7 @@ namespace OmegaSudoku.Core
         /// <param name="r">The zero-based row index of the cell to check.</param>
         /// <param name="c">The zero-based column index of the cell to check.</param>
         /// <returns>true if the cell at the specified row and column has exactly one possible candidate value; otherwise, false.</returns>
-        public bool IsNakedSingle(int r, int c) => board[r, c].PossibleCount == 1;
+        public bool IsNakedSingle(int r, int c) => board[r * boardLen + c].PossibleCount == 1;
 
     
         /// <summary>
@@ -434,7 +425,7 @@ namespace OmegaSudoku.Core
             {
                 for (int col = 0; col < Constants.boardLen; col++)
                 {
-                    SquareCell cell = board[row, col];
+                    SquareCell cell = board[row * boardLen + col];
 
                     if (cell.Value == Constants.emptyCell)
                     {
@@ -444,7 +435,7 @@ namespace OmegaSudoku.Core
                     else
                     {
                         int bit = SudokuHelper.BitFromChar(cell.Value);
-                        int boxIdx = BoxIndex(row, col);
+                        int boxIdx = board[row*boardLen+ col].BoxIndex;
                         bool isDuplicate = (checkRowUsed[row] & bit) != 0 ||
                                            (checkColUsed[col] & bit) != 0 ||
                                            (checkBoxUsed[boxIdx] & bit) != 0;
@@ -473,7 +464,7 @@ namespace OmegaSudoku.Core
                 for (int c = 0; c < Constants.boardLen; c++)
                 {
                     if (c % boxLen == 0 && c != 0) Console.Write("| ");
-                    Console.Write(board[r, c].Value + " ");
+                    Console.Write(board[r * boardLen + c].Value + " ");
                 }
                 Console.WriteLine();
             }

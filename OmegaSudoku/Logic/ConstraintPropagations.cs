@@ -102,7 +102,7 @@ namespace OmegaSudoku.Logic
             HashSet<SquareCell> visited = new HashSet<SquareCell>();
 
             // Seed with neighbors of the starting cell
-            foreach (SquareCell neighbor in board.board[row, col].Neighbors)
+            foreach (SquareCell neighbor in board.board[row*Constants.boardLen+ col].Neighbors)
             {
                 if (neighbor.Value == Constants.emptyCell && visited.Add(neighbor))
                     queue.Enqueue(neighbor);
