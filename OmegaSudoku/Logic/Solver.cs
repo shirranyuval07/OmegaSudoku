@@ -17,6 +17,7 @@ namespace OmegaSudoku.Logic
             return Solves(board, moves);
         }
 
+
         public static bool Solves(ISudokuBoard board,  Stack<Move> forcedMoves)
         {
             int checkpointMove = forcedMoves.Count;

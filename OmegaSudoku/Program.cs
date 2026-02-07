@@ -15,6 +15,5 @@ namespace OmegaSudoku
             Console.SetIn(new StreamReader(Console.OpenStandardInput(8192)));
             UI.UI.Start();
         }
-
     }
 }
