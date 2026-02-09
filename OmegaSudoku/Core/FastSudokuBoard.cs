@@ -22,12 +22,16 @@ namespace OmegaSudoku.Core
         private int[] colUsed;
         private int[] boxUsed;
 
-        public HashSet<SquareCell> EmptyCells;
+        public List<SquareCell> EmptyCells;
 
         private int fullmask;
         public int EmptyCount => EmptyCells.Count;
 
-
+        List<SquareCell> ISudokuBoard.EmptyCells
+        {
+            get => EmptyCells;
+            set => EmptyCells = value;
+        }
         SquareCell[] ISudokuBoard.board
         {
             get => board;
@@ -76,11 +80,6 @@ namespace OmegaSudoku.Core
             set => boxUsed = value;
         }
 
-        HashSet<SquareCell> ISudokuBoard.EmptyCells
-        {
-            get => EmptyCells;
-            set => EmptyCells = value;
-        }
 
         int ISudokuBoard.fullmask
         {
@@ -128,7 +127,7 @@ namespace OmegaSudoku.Core
             ColCounts = new int[len* len];
             BoxCounts = new int[len * len];
 
-            EmptyCells = new HashSet<SquareCell>();
+            EmptyCells = new List<SquareCell>();
             board = new SquareCell[len * len];
 
             InitializeBoard(boardString);
@@ -189,11 +188,13 @@ namespace OmegaSudoku.Core
                 for (int c = 0; c < Constants.boardLen; c++)
                     InitializeNeighbors(board[r * boardLen + c]);
 
+            InitializePossibleValues();
+        }
+        public void InitializePossibleValues()
+        {
             foreach (var cell in EmptyCells)
             {
-                int used = rowUsed[cell.Row] | colUsed[cell.Col] | boxUsed[cell.BoxIndex];
-                // Possible values are those not used in row, column, or box
-                cell.PossibleMask = fullmask & ~used; //clear used bits
+                cell.PossibleMask = ~(rowUsed[cell.Row] | colUsed[cell.Col] | boxUsed[cell.BoxIndex]) & fullmask;
                 UpdateCounts(cell.Row, cell.Col, cell.PossibleMask, 1);
             }
         }
@@ -469,8 +470,75 @@ namespace OmegaSudoku.Core
                 Console.WriteLine();
             }
         }
+        //only resets the board state if the size is the same (used for generating new puzzles from solved boards), otherwise reinitializes everything
+        public void ResetBoard(string boardString)
+        {
+            //check for invalid board before initialization
+            if (boardString == null || boardString == "" || boardString.Length == 1)
+                throw new InvalidPuzzleException("The provided board string is null or empty or single.");
+            double sqrtLen = Math.Sqrt(boardString.Length);
+            if (sqrtLen % 1 != 0)
+                throw new InvalidBoardLengthException("The provided board string length is not a perfect square.");
 
+            Constants.boardLen = (int)sqrtLen;
+            this.boardLen = Constants.boardLen;
+            Constants.SetSymbol();
+            double sqrtBoxLen = Math.Sqrt(boardLen);
+            if (sqrtBoxLen % 1 != 0)
+                throw new InvalidBoardLengthException("The board length does not have an integer square root, invalid for Sudoku.");
+
+            boxLen = (int)sqrtBoxLen;
+
+            int clues = boardString.Count(c => c != Constants.emptyCell);
+
+
+            // Initialize Count Arrays
+            Array.Clear(RowCounts);
+            Array.Clear(ColCounts);
+            Array.Clear(BoxCounts);
+
+            Array.Clear(rowUsed);
+            Array.Clear(colUsed);
+            Array.Clear(boxUsed);
+
+            EmptyCells.Clear();
+            //reusing memory for cells, just resetting values and possible masks instead of creating new instances
+            int totalCells = boardLen * boardLen;
+            for (int i = 0; i < totalCells; i++)
+            {
+                SquareCell cell = board[i]; // Reuse memory
+                char value = boardString[i];
+
+                // Reset Cell State
+                cell.Value = value;
+                cell.Degree = 0; // Reset heuristic
+                // Note: Neighbors are already linked, no need to touch them!
+
+                if (value == Constants.emptyCell)
+                {
+                    EmptyCells.Add(cell);
+                    cell.PossibleMask = fullmask;
+                }
+                else
+                {
+                    // Setup constraints for pre-filled cells
+                    int bit = SudokuHelper.BitFromChar(value);
+                    rowUsed[cell.Row] |= bit;
+                    colUsed[cell.Col] |= bit;
+                    boxUsed[cell.BoxIndex] |= bit;
+                    cell.PossibleMask = bit; // Solved
+                }
+            }
+            InitializePossibleValues();
+
+            if (!IsValidBoard())
+                throw new InvalidPuzzleException("The provided board is not valid.");
+        }
         //call these functions via interface
+        void ISudokuBoard.ResetBoard(string boardString)
+        {
+            ResetBoard(boardString);
+        }
         void ISudokuBoard.InitializeBoard(string boardString)
         {
             InitializeBoard(boardString);

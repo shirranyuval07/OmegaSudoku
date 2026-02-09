@@ -10,6 +10,7 @@ namespace OmegaSudoku.Utils
 {
     static class SudokuHelper
     {
+
         public static int LowestBit(int n) => n & -n;
         public static int BitToIndex(int mask)
         {

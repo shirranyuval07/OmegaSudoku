@@ -22,7 +22,7 @@ namespace OmegaSudoku.Core
         int[] boxUsed {  get; set; }
 
         // Core Collection
-        HashSet<SquareCell> EmptyCells { get; set; }
+        List<SquareCell> EmptyCells { get; set; }
 
         int fullmask {  get; set; }
 
@@ -47,5 +47,7 @@ namespace OmegaSudoku.Core
         void InitializeNeighbors(SquareCell cell);
         bool IsValidBoard();
         void PrintBoard();
+
+        void ResetBoard(string board);
     }
 }

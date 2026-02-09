@@ -26,6 +26,7 @@ namespace OmegaSudoku.UI
             Console.WriteLine("4. Put board into file (between 4x4 to 25x25)");
             Console.WriteLine("5. Check 50k hard 9x9 boards.");
             Console.WriteLine("6. Break from the app");
+            Console.WriteLine("7.Test a million easy 9x9 boards");
             Console.WriteLine("C. Clear Console");
             Console.WriteLine("Enter 'menu' to look at the menu again");
             while (true)
@@ -58,6 +59,11 @@ namespace OmegaSudoku.UI
                             Console.WriteLine("Thank you for using Omega Sudoku Solver");
                             break;
                     }
+                    case "7":
+                        Start1millionEasy();
+                        Console.WriteLine("Welcome back to the menu. Press 'menu' to look at the menu again");
+                        break;
+
                     case "C":
                         Console.Clear();
                         Console.Write("\x1b[3J");
@@ -87,7 +93,7 @@ namespace OmegaSudoku.UI
                     break;
             }
         }
-
+        
         public static void StartSudokuSolver()
         {
             Console.WriteLine("Welcome to Omega Sudoku! \n enter HALAS to stop \n OMEGA - is the key");
@@ -114,13 +120,15 @@ namespace OmegaSudoku.UI
                 Console.WriteLine(input.Length +" is the input length");
                 try
                 {
-                    if(input.Length <=256)
+                    double counter = input.Count(c => c == Constants.emptyCell);
+                    Console.WriteLine((double)(counter / input.Length));
+                    if (input.Length <= 256)
+                    {
                         board = new SudokuBoard(input);
+                    }
                     else
                     {
-                        double counter = input.Count(c => c == Constants.emptyCell);
-                        Console.WriteLine((double)(counter /input.Length));
-                        if (counter == input.Length || counter <= input.Length *0.95)
+                        if (counter == input.Length || counter <= 0.95 * input.Length)
                         {
                             board = new FastSudokuBoard(input);
                         }
@@ -129,9 +137,6 @@ namespace OmegaSudoku.UI
                             board = new SudokuBoard(input);
                         }
                     }
-
-
-
                     board.PrintBoard();
                     start = Stopwatch.GetTimestamp();
                     bool solved = Solver.Solve(board);
@@ -176,11 +181,11 @@ namespace OmegaSudoku.UI
             int count = 0;
 
             var totalSw = Stopwatch.StartNew();
-
+            SudokuBoard board = new SudokuBoard(puzzles[0]);
             foreach (var puzzle in puzzles)
             {
                 // Allocate new board each puzzle
-                SudokuBoard board = new SudokuBoard(puzzle);
+                board.ResetBoard(puzzle);
 
                 Solver.Solve(board);
 
@@ -197,6 +202,59 @@ namespace OmegaSudoku.UI
 
             totalSw.Stop();
 
+            Console.WriteLine("\nDONE");
+            Console.WriteLine($"Total puzzles solved: {count:N0}");
+            Console.WriteLine($"Total time: {totalSw.Elapsed}");
+            Console.WriteLine($"Average per puzzle: {totalSw.Elapsed.TotalMilliseconds / count:F6} ms");
+        }
+        public static void Start1millionEasy()
+        {
+            Console.WriteLine("Starting to solve 1 million easy 9x9 boards...");
+            List<string> puzzles = new List<string>();
+            List<string> solutions = new List<string>();
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string filePath = Path.Combine(baseDir, "FilesData", "sudoku.csv");
+            using (var reader = new StreamReader(filePath))
+            {
+                while (!reader.EndOfStream)
+                {
+                    var line = reader.ReadLine();
+                    var parts = line.Split(',');
+                    puzzles.Add(parts[0]);
+                    solutions.Add(parts[1]);
+                }
+            }
+            Console.WriteLine($"Loaded {puzzles.Count:N0} puzzles");
+            Console.WriteLine("Starting solve...\n");
+            Console.WriteLine();
+            int count = 0;
+            var totalSw = Stopwatch.StartNew();
+            SudokuBoard board = new SudokuBoard(puzzles[0]);
+            foreach (var puzzle in puzzles)
+            {
+                // Allocate new board each puzzle
+                board.ResetBoard(puzzle);
+                Solver.Solve(board);
+                count++;
+                if (board.ToString() != solutions[count - 1])
+                {
+                    Console.WriteLine("Error: Solution does not match expected solution!");
+                    Console.WriteLine("Puzzle:");
+                    board.PrintBoard();
+                    Console.WriteLine("Expected Solution:");
+                    SudokuBoard expectedBoard = new SudokuBoard(solutions[count - 1]);
+                    expectedBoard.PrintBoard();
+                    break;
+                }
+                // Progress every 10k puzzles
+                if (count % 10000 == 0)
+                {
+                    double elapsedSec = totalSw.Elapsed.TotalSeconds;
+                    double rate = count / elapsedSec;
+                    Console.Write($"Solved {count:N0} | {rate:N0} / sec | Elapsed {elapsedSec:F1}s \r");
+                }
+            }
+            totalSw.Stop();
             Console.WriteLine("\nDONE");
             Console.WriteLine($"Total puzzles solved: {count:N0}");
             Console.WriteLine($"Total time: {totalSw.Elapsed}");
@@ -279,13 +337,16 @@ namespace OmegaSudoku.UI
                     string s = UI.GeneratorNxN(int.Parse(Console.ReadLine()));
                     ISudokuBoard board = null;
 
-                    if (s.Length <= 256)
+                    
+                    double counter = s.Count(c => c == Constants.emptyCell);
+                    Console.WriteLine((double)(counter / s.Length));
+                    if(s.Length <= 256)
+                    {
                         board = new SudokuBoard(s);
+                    }
                     else
                     {
-                        double counter = s.Count(c => c == Constants.emptyCell);
-                        Console.WriteLine((double)(counter / s.Length));
-                        if (counter <= 0.95 * s.Length) // alot of try and error
+                        if (counter == s.Length || counter <= 0.95 * s.Length)
                         {
                             board = new FastSudokuBoard(s);
                         }
@@ -294,6 +355,7 @@ namespace OmegaSudoku.UI
                             board = new SudokuBoard(s);
                         }
                     }
+                    
                     double ratio = (double)s.Count(c => c == Constants.emptyCell) / s.Length;
                     Console.WriteLine($"Difficulty Ratio: {ratio:P2}");
 
@@ -363,7 +425,7 @@ namespace OmegaSudoku.UI
                     cellsToRemove = 200;
                     break;
                 case 25:
-                    cellsToRemove = 580;
+                    cellsToRemove = 550;
                     break;
                 default:
                     cellsToRemove = (int)(totalCells * 0.60);

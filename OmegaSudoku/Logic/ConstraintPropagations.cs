@@ -6,12 +6,14 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Buffers;
 
 namespace OmegaSudoku.Logic
 {
     static class ConstraintPropagations
     {
-
+        private static Queue<SquareCell> queue = new Queue<SquareCell>();
+        private static HashSet<SquareCell> visited = new HashSet<SquareCell>();
         /// <summary>
         /// Attempts to fill all cells in the Sudoku board that can be determined by naked or hidden singles, applying
         /// moves until no further progress can be made.
@@ -19,7 +21,7 @@ namespace OmegaSudoku.Logic
         /// <remarks>This method repeatedly searches for naked singles (cells with only one possible
         /// value) and hidden singles (values that can only go in one cell within a unit) and fills them. The process
         /// continues until no further singles can be found. The board is modified in place, and all moves are recorded
-        /// in the provided stack. This method does not guarantee that the puzzle will be completely solved, only that
+        /// in the provided stack. This method does not guarantee that the puzzle will be completely solved, only tx`hat
         /// all singles are filled.</remarks>
         /// <param name="squareCells">A stack used to record each move made when placing a number in a cell. Moves are pushed onto this stack as
         /// they are applied.</param>
@@ -98,8 +100,8 @@ namespace OmegaSudoku.Logic
         {
 
             bool progress = false;
-            Queue<SquareCell> queue = new Queue<SquareCell>();
-            HashSet<SquareCell> visited = new HashSet<SquareCell>();
+            queue.Clear();
+            visited.Clear();
 
             // Seed with neighbors of the starting cell
             foreach (SquareCell neighbor in board.board[row*Constants.boardLen+ col].Neighbors)

@@ -33,6 +33,9 @@ namespace OmegaSudoku.Core
 
         public int BoxIndex { get; private set; }
 
+        public int Index;
+
+        public int Degree;
 
         private char value { get; set; }
         /// <summary>
@@ -48,6 +51,7 @@ namespace OmegaSudoku.Core
             this.value = value;
             this.possibleMask = value == Constants.emptyCell? (1 << Constants.boardLen) - 1: 0;
             this.BoxIndex = (row / Constants.boxLen) * Constants.boxLen + (col / Constants.boxLen);
+            this.Index = row * Constants.boardLen + col;
         }
 
         

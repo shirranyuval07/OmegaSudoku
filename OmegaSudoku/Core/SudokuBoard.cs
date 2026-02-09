@@ -3,6 +3,7 @@ using OmegaSudoku.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace OmegaSudoku.Core
 {
@@ -11,7 +12,7 @@ namespace OmegaSudoku.Core
         public SquareCell[] board;
 
         private int boxLen;
-        private readonly int boardLen;
+        private int boardLen;
 
         public int[] RowCounts;
         public int[] ColCounts;
@@ -20,15 +21,15 @@ namespace OmegaSudoku.Core
         private int[] rowUsed;
         private int[] colUsed;
         private int[] boxUsed;
-        private int[,] counterEmptyNeighbors;
 
-        private HashSet<SquareCell> emptyCells;
+
+        private List<SquareCell> emptyCells;
 
         private int fullmask;
 
         public bool HasEmptyCells => emptyCells.Count > 0;
 
-        public HashSet<SquareCell> EmptyCells => emptyCells;
+        public List<SquareCell> EmptyCells => emptyCells;
         public int[] RowUsed => rowUsed;
         public int[] ColUsed => colUsed;
         public int[] BoxUsed => boxUsed;
@@ -82,7 +83,7 @@ namespace OmegaSudoku.Core
             set => boxUsed = value;
         }
 
-        HashSet<SquareCell> ISudokuBoard.EmptyCells
+        List<SquareCell> ISudokuBoard.EmptyCells
         {
             get => emptyCells;
             set => emptyCells = value;
@@ -106,17 +107,17 @@ namespace OmegaSudoku.Core
         public SudokuBoard(string boardString)
         {
             //check for invalid board before initialization
-            if(boardString == null || boardString == "" || boardString.Length == 1)
+            if (boardString == null || boardString == "" || boardString.Length == 1)
                 throw new InvalidPuzzleException("The provided board string is null or empty or single.");
             double sqrtLen = Math.Sqrt(boardString.Length);
-            if(sqrtLen % 1 != 0)
+            if (sqrtLen % 1 != 0)
                 throw new InvalidBoardLengthException("The provided board string length is not a perfect square.");
 
             Constants.boardLen = (int)sqrtLen;
             this.boardLen = Constants.boardLen;
             Constants.SetSymbol();
             double sqrtBoxLen = Math.Sqrt(boardLen);
-            if(sqrtBoxLen % 1 != 0)
+            if (sqrtBoxLen % 1 != 0)
                 throw new InvalidBoardLengthException("The board length does not have an integer square root, invalid for Sudoku.");
 
             boxLen = (int)sqrtBoxLen;
@@ -127,18 +128,18 @@ namespace OmegaSudoku.Core
             fullmask = (1 << boardLen) - 1;
 
             // Initialize Count Arrays
-            RowCounts = new int[boardLen*boardLen];
-            ColCounts = new int[boardLen*boardLen];
+            RowCounts = new int[boardLen * boardLen];
+            ColCounts = new int[boardLen * boardLen];
             BoxCounts = new int[boardLen * boardLen];
 
             rowUsed = new int[boardLen];
             colUsed = new int[boardLen];
             boxUsed = new int[boardLen];
 
-            counterEmptyNeighbors = new int[boardLen, boardLen];
+            //counterEmptyNeighbors = new int[boardLen*boardLen];
 
-            emptyCells = new HashSet<SquareCell>();
-            board = new SquareCell[boardLen*boardLen];
+            emptyCells = new List<SquareCell>();
+            board = new SquareCell[boardLen * boardLen];
 
             InitializeBoard(boardString);
             InitializePossibleValues();
@@ -163,12 +164,12 @@ namespace OmegaSudoku.Core
             for (int row = 0; row < boardLen; row++)
             {
                 if (row != cell.Row)
-                    neighbors.Add(board[row*boardLen + cell.Col]);
+                    neighbors.Add(board[row * boardLen + cell.Col]);
             }
             for (int col = 0; col < boardLen; col++)
             {
                 if (col != cell.Col)
-                    neighbors.Add(board[cell.Row*boardLen + col]);
+                    neighbors.Add(board[cell.Row * boardLen + col]);
             }
             int boxRowStart = (cell.Row / boxLen) * boxLen;
             int boxColStart = (cell.Col / boxLen) * boxLen;
@@ -199,7 +200,7 @@ namespace OmegaSudoku.Core
                 for (int col = 0; col < boardLen; col++)
                 {
                     char value = boardString[row * boardLen + col];
-                    curr = board[row*boardLen + col] = new SquareCell(row, col, value);
+                    curr = board[row * boardLen + col] = new SquareCell(row, col, value);
                     SudokuHelper.ValidateChar(value, boardLen);
                     if (value == Constants.emptyCell)
                     {
@@ -236,7 +237,7 @@ namespace OmegaSudoku.Core
             foreach (var cell in emptyCells)
             {
                 cell.PossibleMask = ~(rowUsed[cell.Row] | colUsed[cell.Col] | boxUsed[cell.BoxIndex]) & fullmask;
-                counterEmptyNeighbors[cell.Row, cell.Col] = CountEmptyNeighbors(cell.Row, cell.Col);
+                cell.Degree = CountEmptyNeighbors(cell.Row, cell.Col);
 
                 UpdateCounts(cell.Row, cell.Col, cell.PossibleMask, 1);
             }
@@ -259,11 +260,11 @@ namespace OmegaSudoku.Core
             while (mask != 0)
             {
                 int bit = mask & -mask;
-                mask ^= bit;           
+                mask ^= bit;
                 int d = SudokuHelper.BitToIndex(bit);
 
-                RowCounts[row*boardLen+ d] += delta;
-                ColCounts[col*boardLen+ d] += delta;
+                RowCounts[row * boardLen + d] += delta;
+                ColCounts[col * boardLen + d] += delta;
                 BoxCounts[b * boardLen + d] += delta;
             }
         }
@@ -276,9 +277,9 @@ namespace OmegaSudoku.Core
         public void DecrementSingleCount(int row, int col, char value)
         {
             int index = Constants.CharToIndex[value];
-            RowCounts[row*boardLen+ index]--;
+            RowCounts[row * boardLen + index]--;
             ColCounts[col * boardLen + index]--;
-            BoxCounts[board[row * boardLen + col].BoxIndex*boardLen+ index]--;
+            BoxCounts[board[row * boardLen + col].BoxIndex * boardLen + index]--;
         }
 
         /// <summary>
@@ -295,7 +296,7 @@ namespace OmegaSudoku.Core
             int d = Constants.CharToIndex[value];
             return RowCounts[row * boardLen + d] == 1 ||
                    ColCounts[col * boardLen + d] == 1 ||
-                   BoxCounts[board[row * boardLen + col].BoxIndex*boardLen+ d] == 1;
+                   BoxCounts[board[row * boardLen + col].BoxIndex * boardLen + d] == 1;
         }
 
         /// <summary>
@@ -328,11 +329,11 @@ namespace OmegaSudoku.Core
                 {
                     minOptions = options;
                     bestCell = cell;
-                    maxDegree = counterEmptyNeighbors[cell.Row, cell.Col];
+                    maxDegree = cell.Degree;
                 }
                 else if (options == minOptions)
                 {
-                    int degree = counterEmptyNeighbors[cell.Row, cell.Col];
+                    int degree = cell.Degree;
                     if (degree > maxDegree)
                     {
                         maxDegree = degree;
@@ -381,7 +382,7 @@ namespace OmegaSudoku.Core
             SquareCell cell = board[row * boardLen + col];
             int bit = SudokuHelper.BitFromChar(value);
 
-            if((cell.PossibleMask & bit) == 0)
+            if ((cell.PossibleMask & bit) == 0)
                 return false;
 
             moves.Push(new Move(cell, cell.PossibleMask));
@@ -398,16 +399,19 @@ namespace OmegaSudoku.Core
             foreach (SquareCell neighbor in cell.Neighbors)
             {
                 if (neighbor.Value == Constants.emptyCell)
-                    counterEmptyNeighbors[neighbor.Row, neighbor.Col]--;
+                    neighbor.Degree--;
 
                 if (neighbor.Value == Constants.emptyCell && neighbor.Contains(value))
                 {
                     moves.Push(new Move(neighbor, neighbor.PossibleMask));
-                    
+
                     DecrementSingleCount(neighbor.Row, neighbor.Col, value);
 
-                    if(!neighbor.RemovePossibleValue(value))
+                    if (!neighbor.RemovePossibleValue(value))
+                    {
                         flag = false;
+                        break;
+                    }
                 }
             }
             return flag;
@@ -440,7 +444,7 @@ namespace OmegaSudoku.Core
                     //propagate neighbors
                     foreach (var neighbor in cell.Neighbors)
                     {
-                        counterEmptyNeighbors[neighbor.Row, neighbor.Col]++;
+                        neighbor.Degree++;
                     }
                 }
 
@@ -463,7 +467,7 @@ namespace OmegaSudoku.Core
             }
         }
 
-        
+
         /// <summary>
         /// Determines whether the specified cell is a naked single, meaning it has exactly one possible candidate value
         /// remaining.
@@ -513,8 +517,8 @@ namespace OmegaSudoku.Core
                                            (checkBoxUsed[boxIdx] & bit) != 0;
                         if (isDuplicate)
                             return false;
-                        checkRowUsed[row] = SudokuHelper.AddBit(checkRowUsed[row],bit);
-                        checkColUsed[col] = SudokuHelper.AddBit(checkColUsed[col],bit);
+                        checkRowUsed[row] = SudokuHelper.AddBit(checkRowUsed[row], bit);
+                        checkColUsed[col] = SudokuHelper.AddBit(checkColUsed[col], bit);
                         checkBoxUsed[boxIdx] = SudokuHelper.AddBit(checkBoxUsed[boxIdx], bit);
                     }
                 }
@@ -522,8 +526,8 @@ namespace OmegaSudoku.Core
 
             return true;
         }
-        
-      
+
+
         /// <summary>
         /// Displays the current state of the board to the console in a formatted layout.
         /// </summary>
@@ -534,8 +538,8 @@ namespace OmegaSudoku.Core
             Console.WriteLine();
             for (int row = 0; row < boardLen; row++)
             {
-                if (row % boxLen == 0 && row != 0)
-                    Console.WriteLine(new string('-', (boxLen * boardLen) - 3));
+                if (row % boxLen == 0)
+                    Console.WriteLine(new string('-', (boxLen * boardLen) - boxLen));
 
                 for (int col = 0; col < boardLen; col++)
                 {
@@ -546,18 +550,91 @@ namespace OmegaSudoku.Core
                 }
                 Console.WriteLine();
             }
+            Console.WriteLine(new string('-', (boxLen * boardLen) - boxLen));
+
         }
         /// <summary>
         /// Returns a string representation of the board by concatenating the values of all cells in row-major order.
         /// </summary>
         /// <returns>A string containing the values of the board's cells, ordered from top-left to bottom-right.</returns>
+
+
         public override string ToString()
         {
-            string str = "";
+            StringBuilder sb = new StringBuilder(boardLen * boardLen);
             for (int row = 0; row < boardLen; row++)
                 for (int col = 0; col < boardLen; col++)
-                    str += board[row * boardLen + col].Value;
-            return str;
+                    sb.Append(board[row * boardLen + col].Value);
+            return sb.ToString();
+        }
+        //only used for testing, resets the board to a new state based on the provided string without creating a new instance. This allows for reusing the same board object across multiple test cases, reducing overhead and improving performance during testing.
+        public void ResetBoard(string boardString)
+        {
+            int prevLen = boardLen;
+            //check for invalid board before initialization
+            if(prevLen*prevLen != boardString.Length)
+            {
+                double sqrtLen = Math.Sqrt(boardString.Length);
+                Constants.boardLen = (int)sqrtLen;
+                this.boardLen = Constants.boardLen;
+                Constants.SetSymbol();
+                double sqrtBoxLen = Math.Sqrt(boardLen);
+
+                if (boardString == null || boardString == "" || boardString.Length == 1)
+                    throw new InvalidPuzzleException("The provided board string is null or empty or single.");
+                if (sqrtLen % 1 != 0)
+                    throw new InvalidBoardLengthException("The provided board string length is not a perfect square.");
+
+
+                if (sqrtBoxLen % 1 != 0)
+                    throw new InvalidBoardLengthException("The board length does not have an integer square root, invalid for Sudoku.");
+
+                boxLen = (int)sqrtBoxLen;
+            }
+           
+
+
+            // Initialize Count Arrays
+            Array.Clear(RowCounts);
+            Array.Clear(ColCounts);
+            Array.Clear(BoxCounts);
+
+            Array.Clear(rowUsed);
+            Array.Clear(colUsed);
+            Array.Clear(boxUsed);
+
+            emptyCells.Clear();
+            //reusing memory for cells, just resetting values and possible masks instead of creating new instances
+            int totalCells = boardLen * boardLen;
+            for (int i = 0; i < totalCells; i++)
+            {
+                SquareCell cell = board[i]; // Reuse memory
+                char value = boardString[i];
+
+                // Reset Cell State
+                cell.Value = value;
+                cell.Degree = 0; // Reset heuristic
+                // Note: Neighbors are already linked, no need to touch them!
+
+                if (value == Constants.emptyCell)
+                {
+                    emptyCells.Add(cell);
+                    cell.PossibleMask = fullmask;
+                }
+                else
+                {
+                    // Setup constraints for pre-filled cells
+                    int bit = SudokuHelper.BitFromChar(value);
+                    rowUsed[cell.Row] |= bit;
+                    colUsed[cell.Col] |= bit;
+                    boxUsed[cell.BoxIndex] |= bit;
+                    cell.PossibleMask = bit; // Solved
+                }
+            }
+            InitializePossibleValues();
+
+            //if (!IsValidBoard())
+            //    throw new InvalidPuzzleException("The provided board is not valid.");
         }
         //call these functions via interface to avoid accessibility issues
         void ISudokuBoard.InitializeBoard(string boardString)
@@ -569,6 +646,9 @@ namespace OmegaSudoku.Core
         {
             UpdateCounts(r, c, mask, delta);
         }
-
+        void ISudokuBoard.ResetBoard(string boardString)
+        {
+            ResetBoard(boardString);
+        }
     }
 }
