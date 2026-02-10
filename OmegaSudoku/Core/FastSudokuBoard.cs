@@ -459,15 +459,30 @@ namespace OmegaSudoku.Core
         public void PrintBoard()
         {
             Console.WriteLine();
-            for (int r = 0; r < Constants.boardLen; r++)
+            for (int row = 0; row < boardLen; row++)
             {
-                if (r % boxLen == 0 && r != 0) Console.WriteLine(new string('-', (boxLen * Constants.boardLen * 2)));
-                for (int c = 0; c < Constants.boardLen; c++)
+                if (row % boxLen == 0)
                 {
-                    if (c % boxLen == 0 && c != 0) Console.Write("| ");
-                    Console.Write(board[r * boardLen + c].Value + " ");
+                    int width = (boardLen * 2) + ((boardLen / boxLen - 1) * 3) + 4;
+                    Console.WriteLine(new string('-', width));
+
+                    Console.Write("| ");
+                    for (int col = 0; col < boardLen; col++)
+                    {
+                        if (col % boxLen == 0 && col != 0)
+                            Console.Write(" | ");
+                        var val = board[row * boardLen + col].Value;
+                        Console.ForegroundColor = (val == Constants.emptyCell) ? ConsoleColor.DarkGray : ConsoleColor.Cyan;
+                        Console.Write(val + " ");
+                        Console.ResetColor();
+                    }
+
+                    Console.Write("|");
+                    Console.WriteLine();
                 }
-                Console.WriteLine();
+
+                int bottomWidth = (boardLen * 2) + ((boardLen / boxLen - 1) * 3) + 4;
+                Console.WriteLine(new string('-', bottomWidth));
             }
         }
         //only resets the board state if the size is the same (used for generating new puzzles from solved boards), otherwise reinitializes everything

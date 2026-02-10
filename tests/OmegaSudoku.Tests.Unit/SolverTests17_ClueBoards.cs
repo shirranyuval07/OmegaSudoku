@@ -29,6 +29,7 @@ namespace OmegaSudoku.Tests.Unit
                     listA.Add(line);
                 }
             }
+            SudokuBoard board = new SudokuBoard(listA[0]);
 
             foreach (string puzzle in listA)
             {
@@ -41,7 +42,7 @@ namespace OmegaSudoku.Tests.Unit
                 {
                     start = Stopwatch.GetTimestamp();
                     // Arrange
-                    SudokuBoard board = new SudokuBoard(puzzle);
+                    board.ResetBoard(puzzle);
                     // Act
                     Solver.Solve(board);
                     end = Stopwatch.GetTimestamp();

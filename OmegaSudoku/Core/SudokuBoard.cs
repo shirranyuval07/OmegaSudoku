@@ -107,8 +107,11 @@ namespace OmegaSudoku.Core
         public SudokuBoard(string boardString)
         {
             //check for invalid board before initialization
-            if (boardString == null || boardString == "" || boardString.Length == 1)
+          
+            if (boardString == null || boardString == "")
                 throw new InvalidPuzzleException("The provided board string is null or empty or single.");
+            if (boardString.Length == 1)
+                throw new InvalidBoardLengthException("The provided board string length is 1, which is invalid for a Sudoku puzzle.");
             double sqrtLen = Math.Sqrt(boardString.Length);
             if (sqrtLen % 1 != 0)
                 throw new InvalidBoardLengthException("The provided board string length is not a perfect square.");
@@ -539,19 +542,29 @@ namespace OmegaSudoku.Core
             for (int row = 0; row < boardLen; row++)
             {
                 if (row % boxLen == 0)
-                    Console.WriteLine(new string('-', (boxLen * boardLen) - boxLen));
+                {
+                    int width = (boardLen * 2) + ((boardLen / boxLen - 1) * 3) + 4;
+                    Console.WriteLine(new string('-', width));
+                }
+
+                Console.Write("| ");
 
                 for (int col = 0; col < boardLen; col++)
                 {
                     if (col % boxLen == 0 && col != 0)
                         Console.Write(" | ");
-
-                    Console.Write(board[row * boardLen + col].Value + " ");
+                    var val = board[row * boardLen + col].Value;
+                    Console.ForegroundColor = (val == Constants.emptyCell) ? ConsoleColor.DarkGray : ConsoleColor.Cyan;
+                    Console.Write(val + " ");
+                    Console.ResetColor();
                 }
+
+                Console.Write("|"); 
                 Console.WriteLine();
             }
-            Console.WriteLine(new string('-', (boxLen * boardLen) - boxLen));
 
+            int bottomWidth = (boardLen * 2) + ((boardLen / boxLen - 1) * 3) + 4;
+            Console.WriteLine(new string('-', bottomWidth));
         }
         /// <summary>
         /// Returns a string representation of the board by concatenating the values of all cells in row-major order.

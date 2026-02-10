@@ -32,6 +32,7 @@ namespace OmegaSudoku.UI
             Console.WriteLine("6. Break from the app");
             Console.WriteLine("7.Test a million easy 9x9 boards");
             Console.WriteLine("C. Clear Console");
+            Console.WriteLine("clearfile. to clear the file");
             Console.WriteLine("Enter 'menu' to look at the menu again");
             while (true)
             {
@@ -52,6 +53,10 @@ namespace OmegaSudoku.UI
                         break;
                     case "4":
                         StartInputIntoFile();
+                        Console.WriteLine("Welcome back to the menu. Press 'menu' to look at the menu again");
+                        break;
+                    case "clearfile":
+                        ClearFile();
                         Console.WriteLine("Welcome back to the menu. Press 'menu' to look at the menu again");
                         break;
                     case "5":
@@ -84,6 +89,8 @@ namespace OmegaSudoku.UI
                             Console.WriteLine("5. Check 50k hard 9x9 boards.");
                             Console.WriteLine("6. Break from the app");
                             Console.WriteLine("C. Clear Console");
+                            Console.WriteLine("7.Test a million easy 9x9 boards");
+                            Console.WriteLine("clearfile. to clear the file");
                             Console.WriteLine("Enter 'menu' to look at the menu again");
                             break;
                         }
@@ -133,6 +140,10 @@ namespace OmegaSudoku.UI
                     }
                     else
                     {
+                        if(counter > 0.95 * input.Length && counter != input.Length)
+                        {
+                            throw new InvalidPuzzleException("Board is too empty. Please provide a board with at least 5% filled cells for better performance.");
+                        }
                         if (counter == input.Length || counter <= 0.95 * input.Length)
                         {
                             board = new FastSudokuBoard(input);
@@ -251,8 +262,8 @@ namespace OmegaSudoku.UI
                     expectedBoard.PrintBoard();
                     break;
                 }
-                // Progress every 10k puzzles
-                if (count % 10000 == 0)
+                // Progress every 100k puzzles
+                if (count % 100000 == 0)
                 {
                     double elapsedSec = totalSw.Elapsed.TotalSeconds;
                     double rate = count / elapsedSec;
@@ -308,11 +319,32 @@ namespace OmegaSudoku.UI
                     listA.Add(line);
                 }
             }
+            ISudokuBoard board = null;
             foreach (string line in listA)
             {
                 try
                 {
-                    SudokuBoard board = new SudokuBoard(line);
+                    double counter = line.Count(c => c == Constants.emptyCell);
+                    Console.WriteLine((double)(counter / line.Length));
+                    if (line.Length <= 256)
+                    {
+                        board = new SudokuBoard(line);
+                    }
+                    else
+                    {
+                        if (counter > 0.95 * line.Length && counter != line.Length)
+                        {
+                            throw new InvalidPuzzleException("Board is too empty. Please provide a board with at least 5% filled cells for better performance.");
+                        }
+                        if (counter == line.Length || counter <= 0.95 * line.Length)
+                        {
+                            board = new FastSudokuBoard(line);
+                        }
+                        else
+                        {
+                            board = new SudokuBoard(line);
+                        }
+                    }
                     board.PrintBoard();
                     bool solved = Solver.Solve(board);
                     if (solved)
@@ -327,6 +359,20 @@ namespace OmegaSudoku.UI
                 {
                     Console.WriteLine($"A Sudoku Board Exception occured: {ex.Message}");
                 }
+            }
+        }
+        public static void ClearFile()
+        {
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string filePath = Path.Combine(baseDir, "FilesData", "boards.txt");
+            try
+            {
+                File.WriteAllText(filePath, string.Empty);
+                Console.WriteLine("File cleared successfully.");
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
             }
         }
         public static void StartSudokuSolverGenerated()
@@ -345,28 +391,32 @@ namespace OmegaSudoku.UI
                     if (answer == "Y")
                         break;
                     Console.WriteLine("Give board size");
-                    string s = UI.GeneratorNxN(int.Parse(Console.ReadLine()));
+                    string input = UI.GeneratorNxN(int.Parse(Console.ReadLine()));
                     ISudokuBoard board = null;
 
-                    double counter = s.Count(c => c == Constants.emptyCell);
-                    Console.WriteLine((double)(counter / s.Length));
-                    if (s.Length <= 256)
+                    double counter = input.Count(c => c == Constants.emptyCell);
+                    Console.WriteLine((double)(counter / input.Length));
+                    if (input.Length <= 256)
                     {
-                        board = new SudokuBoard(s);
+                        board = new SudokuBoard(input);
                     }
                     else
                     {
-                        if (counter == s.Length || counter <= 0.95 * s.Length)
+                        if (counter > 0.95 * input.Length && counter != input.Length)
                         {
-                            board = new FastSudokuBoard(s);
+                            throw new InvalidPuzzleException("Board is too empty. Please provide a board with at least 5% filled cells for better performance.");
+                        }
+                        if (counter == input.Length || counter <= 0.95 * input.Length)
+                        {
+                            board = new FastSudokuBoard(input);
                         }
                         else
                         {
-                            board = new SudokuBoard(s);
+                            board = new SudokuBoard(input);
                         }
                     }
 
-                    double ratio = (double)s.Count(c => c == Constants.emptyCell) / s.Length;
+                    double ratio = (double)input.Count(c => c == Constants.emptyCell) / input.Length;
                     Console.WriteLine($"Difficulty Ratio: {ratio:P2}");
 
 
