@@ -539,32 +539,28 @@ namespace OmegaSudoku.Core
         public void PrintBoard()
         {
             Console.WriteLine();
+            int width = (boardLen * 2) + ((boardLen / boxLen - 1) * 3) + 4;
+
             for (int row = 0; row < boardLen; row++)
             {
                 if (row % boxLen == 0)
-                {
-                    int width = (boardLen * 2) + ((boardLen / boxLen - 1) * 3) + 4;
                     Console.WriteLine(new string('-', width));
-                }
 
                 Console.Write("| ");
-
                 for (int col = 0; col < boardLen; col++)
                 {
                     if (col % boxLen == 0 && col != 0)
                         Console.Write(" | ");
-                    var val = board[row * boardLen + col].Value;
+
+                    char val = board[row * boardLen + col].Value;
                     Console.ForegroundColor = (val == Constants.emptyCell) ? ConsoleColor.DarkGray : ConsoleColor.Cyan;
                     Console.Write(val + " ");
                     Console.ResetColor();
                 }
-
-                Console.Write("|"); 
+                Console.Write("|");
                 Console.WriteLine();
             }
-
-            int bottomWidth = (boardLen * 2) + ((boardLen / boxLen - 1) * 3) + 4;
-            Console.WriteLine(new string('-', bottomWidth));
+            Console.WriteLine(new string('-', width));
         }
         /// <summary>
         /// Returns a string representation of the board by concatenating the values of all cells in row-major order.
