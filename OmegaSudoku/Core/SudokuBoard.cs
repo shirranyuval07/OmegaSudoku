@@ -27,8 +27,8 @@ namespace OmegaSudoku.Core
 
         private int fullmask;
 
-        public bool HasEmptyCells => emptyCells.Count > 0;
 
+        public bool HasEmptyCells => numOfFilledCells < (boardLen * boardLen);
         public List<SquareCell> EmptyCells => emptyCells;
         public int[] RowUsed => rowUsed;
         public int[] ColUsed => colUsed;
@@ -106,7 +106,7 @@ namespace OmegaSudoku.Core
         /// valid Sudoku grid size, or represents an invalid Sudoku board.</exception>
         public SudokuBoard(string boardString)
         {
-            //check for invalid board before initialization
+            //check for exceptions before initialization
           
             if (boardString == null || boardString == "")
                 throw new InvalidPuzzleException("The provided board string is null or empty or single.");
@@ -118,11 +118,13 @@ namespace OmegaSudoku.Core
 
             Constants.boardLen = (int)sqrtLen;
             this.boardLen = Constants.boardLen;
-            Constants.SetSymbol();
             double sqrtBoxLen = Math.Sqrt(boardLen);
+
             if (sqrtBoxLen % 1 != 0)
                 throw new InvalidBoardLengthException("The board length does not have an integer square root, invalid for Sudoku.");
-
+            //initialize symbol set based on board length, this allows for flexible board sizes and corresponding symbols.
+            Constants.SetSymbol();
+            
             boxLen = (int)sqrtBoxLen;
 
             int clues = boardString.Count(c => c != Constants.emptyCell);
@@ -139,8 +141,6 @@ namespace OmegaSudoku.Core
             colUsed = new int[boardLen];
             boxUsed = new int[boardLen];
 
-            //counterEmptyNeighbors = new int[boardLen*boardLen];
-
             emptyCells = new List<SquareCell>();
             board = new SquareCell[boardLen * boardLen];
 
@@ -149,6 +149,7 @@ namespace OmegaSudoku.Core
 
             if (!IsValidBoard())
                 throw new InvalidPuzzleException("The provided board is not valid.");
+            numOfFilledCells = clues;
         }
 
 
@@ -162,6 +163,7 @@ namespace OmegaSudoku.Core
         /// <param name="cell">The cell for which to determine and assign neighboring cells. Cannot be null.</param>
         public void InitializeNeighbors(SquareCell cell)
         {
+            //for easier addition of neighbors without worrying about duplicates, we use a hashset first and then convert to array at the end
             var neighbors = new HashSet<SquareCell>();
 
             for (int row = 0; row < boardLen; row++)
@@ -204,7 +206,9 @@ namespace OmegaSudoku.Core
                 {
                     char value = boardString[row * boardLen + col];
                     curr = board[row * boardLen + col] = new SquareCell(row, col, value);
+                    //check if the char is valid for the board size, this also allows for flexible symbol sets based on board length
                     SudokuHelper.ValidateChar(value, boardLen);
+                    //if it's empty, add to empty cells list and set possible mask to full, otherwise update the used masks for row, col and box
                     if (value == Constants.emptyCell)
                     {
                         emptyCells.Add(curr);
@@ -237,6 +241,10 @@ namespace OmegaSudoku.Core
         /// row, column, and box.</remarks>
         public void InitializePossibleValues()
         {
+            /* For each empty cell, calculate the possible values by checking the used values in its row, column, and box.
+             * The possible mask is set to the inverse of the union of these used values,
+             * masked by the fullmask to ensure only valid bits are considered.
+             * The degree (number of empty neighbors) is also calculated for heuristic purposes.*/
             foreach (var cell in emptyCells)
             {
                 cell.PossibleMask = ~(rowUsed[cell.Row] | colUsed[cell.Col] | boxUsed[cell.BoxIndex]) & fullmask;
@@ -260,6 +268,9 @@ namespace OmegaSudoku.Core
         private void UpdateCounts(int row, int col, int mask, int delta)
         {
             int b = board[row * boardLen + col].BoxIndex;
+            /* Iterate through each set bit in the mask and update the
+             * corresponding counts for the row, column, and box. 
+             * The loop continues until all bits in the mask have been processed.*/
             while (mask != 0)
             {
                 int bit = mask & -mask;
@@ -316,12 +327,22 @@ namespace OmegaSudoku.Core
             if (emptyCells.Count == 0)
                 return null;
 
+            //bestCell is the cell with the least possible values, if tie, the one with most empty neighbors (degree)
             SquareCell bestCell = null;
+            /* We initialize minOptions to int.MaxValue to ensure that any cell with fewer options will be considered, 
+             * and maxDegree to -1 to ensure that any cell with a valid degree will be
+             * considered in the case of a tie in options.*/
             int minOptions = int.MaxValue;
             int maxDegree = -1;
 
-            foreach (var cell in emptyCells)
+            for (int i = 0; i < emptyCells.Count; i++)
             {
+                //get the cell reference for easier access
+                var cell = emptyCells[i];
+
+                //if it was filled after initialization, skip it
+                if (cell.Value != Constants.emptyCell)
+                    continue;
                 int options = cell.PossibleCount;
 
                 // Naked single: immediately return
@@ -382,8 +403,9 @@ namespace OmegaSudoku.Core
         public bool PlaceNumber(int row, int col, char value, Stack<Move> moves)
         {
 
-            SquareCell cell = board[row * boardLen + col];
+            SquareCell cell = board[row * boardLen + col];//get the cell reference for easier access
             int bit = SudokuHelper.BitFromChar(value);
+            //check if the value is actually a possible value for the cell, if not return false and don't modify anything
 
             if ((cell.PossibleMask & bit) == 0)
                 return false;
@@ -394,13 +416,16 @@ namespace OmegaSudoku.Core
             UpdateCounts(row, col, cell.PossibleMask, -1);
             //update values
             cell.Value = value;
-            emptyCells.Remove(cell);
+            numOfFilledCells++;
             cell.PossibleMask = 0;
 
             bool flag = true;
             //propagate:
             foreach (SquareCell neighbor in cell.Neighbors)
             {
+                /*if neighbor is empty, we decrement degree for heuristic,
+                 * if it contains the value we are placing, we need to remove that possibility and update counts,
+                 * if that leads to no possibilities left, we return false to indicate failure*/
                 if (neighbor.Value == Constants.emptyCell)
                     neighbor.Degree--;
 
@@ -432,18 +457,21 @@ namespace OmegaSudoku.Core
         /// <param name="checkpoint">The target number of moves to retain in the stack. All moves above this count will be undone.</param>
         public void RemoveNumbers(Stack<Move> moves, int checkpoint)
         {
+            /*foreach new Move since the last checkpoint(backtrack)*/
             while (moves.Count > checkpoint)
             {
                 Move move = moves.Pop();
+                //restore the cell's previous state
                 SquareCell cell = move.Cell;
                 bool wasFilled = cell.Value != Constants.emptyCell;
 
                 int oldMask = cell.PossibleMask;
+                //restore value and degree if it was filled, if it was empty we just restore the possible mask and update counts accordingly
                 if (wasFilled)
                 {
                     //make it empty
                     cell.Value = Constants.emptyCell;
-                    emptyCells.Add(cell);
+                    numOfFilledCells--;
                     //propagate neighbors
                     foreach (var neighbor in cell.Neighbors)
                     {
@@ -507,6 +535,7 @@ namespace OmegaSudoku.Core
 
                     if (cell.Value == Constants.emptyCell)
                     {
+                        //if any empty cell is in a failed state, the board is invalid
                         if (cell.Failed())
                             return false;
                     }
@@ -641,9 +670,7 @@ namespace OmegaSudoku.Core
                 }
             }
             InitializePossibleValues();
-
-            //if (!IsValidBoard())
-            //    throw new InvalidPuzzleException("The provided board is not valid.");
+            numOfFilledCells = totalCells - emptyCells.Count;
         }
         //call these functions via interface to avoid accessibility issues
         void ISudokuBoard.InitializeBoard(string boardString)

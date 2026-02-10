@@ -30,7 +30,7 @@ namespace OmegaSudoku.Logic
         /// <returns>true if at least one cell was filled during the operation; otherwise, false.</returns>
         public static bool FillAllSingles(Stack<Move> squareCells, ISudokuBoard board)
         {
-            bool progress = true;
+            bool progress = true;//tracks whether any cells were filled during the process, allowing for multiple iterations until no more singles are found
             while (progress)
             {
                 progress = false;

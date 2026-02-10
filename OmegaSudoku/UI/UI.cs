@@ -213,6 +213,7 @@ namespace OmegaSudoku.UI
                     double elapsedSec = totalSw.Elapsed.TotalSeconds;
                     double rate = count / elapsedSec;
                     Console.Write($"Solved {count:N0} | {rate:N0} / sec | Elapsed {elapsedSec:F1}s \r");
+                    board.PrintBoard();
                 }
             }
 
@@ -485,7 +486,7 @@ namespace OmegaSudoku.UI
                     cellsToRemove = 200;
                     break;
                 case 25:
-                    cellsToRemove = 550;
+                    cellsToRemove = 500;
                     break;
                 default:
                     cellsToRemove = (int)(totalCells * 0.60);

@@ -10,8 +10,6 @@ namespace OmegaSudoku.Logic
 {
     static class Solver
     {
-
-
         public static bool Solve(ISudokuBoard board)
         {
             Stack<Move> moves = new Stack<Move>();

@@ -8,6 +8,7 @@ namespace OmegaSudoku.Core
 {
     class FastSudokuBoard : ISudokuBoard
     {
+        //special class for big boards
         public SquareCell[] board;
         private int boxLen;
         private int boardLen;
@@ -25,7 +26,10 @@ namespace OmegaSudoku.Core
         public List<SquareCell> EmptyCells;
 
         private int fullmask;
-        public int EmptyCount => EmptyCells.Count;
+        public int numOfFilledCells { get; set; }
+
+        public bool HasEmptyCells => numOfFilledCells < (boardLen * boardLen);
+
 
         List<SquareCell> ISudokuBoard.EmptyCells
         {
@@ -87,8 +91,6 @@ namespace OmegaSudoku.Core
             set => fullmask = value;
         }
 
-        public bool HasEmptyCells => EmptyCells.Count > 0;
-
         // Constructor for initializing the board from a string
         /// <summary>
         /// Initializes a new instance of the FastSudokuBoard class using the specified board string representation.
@@ -102,6 +104,7 @@ namespace OmegaSudoku.Core
         /// for Sudoku, the board has too few clues (1-3), or the board does not represent a valid Sudoku puzzle.</exception>
         public FastSudokuBoard(string boardString)
         {
+            //check for exception before initialization to avoid unnecessary setup for invalid boards
             if (boardString == null || boardString == "")
                 throw new InvalidPuzzleException("The provided board string is null or empty.");
             double sqrtLen = Math.Sqrt(boardString.Length);
@@ -109,10 +112,11 @@ namespace OmegaSudoku.Core
                 throw new InvalidBoardLengthException("The provided board string length is not a perfect square.");
 
             Constants.boardLen = (int)sqrtLen;
-            Constants.SetSymbol();
             double sqrtBoxLen = Math.Sqrt(Constants.boardLen);
             if (sqrtBoxLen % 1 != 0)
                 throw new InvalidBoardLengthException("The board length does not have an integer square root, invalid for Sudoku.");
+            Constants.SetSymbol();
+          
 
             boxLen = (int)sqrtBoxLen;
             fullmask = (1 << Constants.boardLen) - 1;
@@ -132,11 +136,13 @@ namespace OmegaSudoku.Core
 
             InitializeBoard(boardString);
             int clues = Constants.boardLen * Constants.boardLen - EmptyCells.Count;
-            if (clues > 0 && clues < 4)// 1-3 clues takes too much time (about 1.5 minutes for 25x25)
+            if (clues > 0 && clues < 4)// 1-3 clues takes too much time
                 throw new InvalidPuzzleException("Board has too few clues (1-3). " +
                                                   "It must be empty (0) or have a valid puzzle start.");
             if (!IsValidBoard())
                 throw new InvalidPuzzleException("The provided board string represents an invalid Sudoku board.");
+
+            numOfFilledCells = clues;
         }
 
         /// <summary>
@@ -166,7 +172,7 @@ namespace OmegaSudoku.Core
                 int c = i % Constants.boardLen;
                 char val = boardString[i];
                 curr = board[r*boardLen + c] = new SquareCell(r, c, val);
-
+                //Ensure the char is valid for the board size
                 SudokuHelper.ValidateChar(val, Constants.boardLen);
 
                 if (val == Constants.emptyCell)
@@ -208,14 +214,15 @@ namespace OmegaSudoku.Core
         /// <param name="cell">The cell for which to initialize the Neighbors property. Cannot be null.</param>
         private void InitializeNeighbors(SquareCell cell)
         {
-            List<SquareCell> l = new List<SquareCell>();
+            //uses hashset for easy addition. then convert it to an array
+            HashSet<SquareCell> l = new HashSet<SquareCell>();
             int row = cell.Row, col = cell.Col;
             for (int k = 0; k < Constants.boardLen; k++)
             {
                 if (k != col) l.Add(board[row*boardLen+ k]);
                 if (k != row) l.Add(board[k * boardLen + col]);
             }
-            int br = (row / boxLen) * boxLen, bc = (col / boxLen) * boxLen;
+            int br = (row / boxLen) * boxLen, bc = (col / boxLen) * boxLen; //br = boxRow, bc = boxCol
             for (int i = 0; i < boxLen; i++) for (int j = 0; j < boxLen; j++)
                 {
                     int nr = br + i, nc = bc + j;
@@ -239,8 +246,14 @@ namespace OmegaSudoku.Core
             SquareCell bestCell = null;
             int minOptions = int.MaxValue;
 
-            foreach (var cell in EmptyCells)
+            for (int i = 0; i < EmptyCells.Count; i++)
             {
+                //get the cell reference for easier access
+                var cell = EmptyCells[i];
+
+                //if it was filled after initialization, skip it
+                if (cell.Value != Constants.emptyCell)
+                    continue;
                 // Count is auto-updated by the setter in SquareCell
                 int opts = cell.PossibleCount;
                 if (opts == 0) return null; // Impossible
@@ -271,9 +284,12 @@ namespace OmegaSudoku.Core
         /// results in an invalid state.</returns>
         public bool PlaceNumber(int row, int col, char value, Stack<Move> moves)
         {
-            SquareCell cell = board[row * boardLen + col];
+            SquareCell cell = board[row * boardLen + col];//get the cell reference for easier access
             int bit = SudokuHelper.BitFromChar(value);
+            //check if the value is actually a possible value for the cell, if not return false and don't modify anything
 
+            if ((cell.PossibleMask & bit) == 0)
+                return false;
             moves.Push(new Move(cell, cell.PossibleMask));
 
             // Maintenance
@@ -282,11 +298,13 @@ namespace OmegaSudoku.Core
             //set value and update appropriate attributes
             cell.Value = value;
             cell.PossibleMask = 0;
-            EmptyCells.Remove(cell);
+            numOfFilledCells++;
 
             // Propagate
             foreach (SquareCell neighbor in cell.Neighbors)
             {
+                /*if neighbor is empty and it contains the value we are placing, we need to remove that possibility and update counts,
+                 * if that leads to no possibilities left, we return false to indicate failure*/
                 if (neighbor.Value == Constants.emptyCell && (neighbor.PossibleMask & bit) != 0)
                 {
                     moves.Push(new Move(neighbor, neighbor.PossibleMask));
@@ -313,20 +331,25 @@ namespace OmegaSudoku.Core
         /// <param name="checkpoint">The target number of moves to retain in the stack. All moves above this count will be undone.</param>
         public void RemoveNumbers(Stack<Move> moves, int checkpoint)
         {
+            /*foreach new Move since the last checkpoint(backtrack)*/
+
             while (moves.Count > checkpoint)
             {
                 Move move = moves.Pop();
+                //restore the cell's previous state
                 SquareCell cell = move.Cell;
                 bool wasFilled = cell.Value != Constants.emptyCell;
 
                 int oldMask = cell.PossibleMask;
-                cell.PossibleMask = move.PreviousMask; 
-
+                cell.PossibleMask = move.PreviousMask;
+                /*If the cell was filled, we need to clear it and update counts.
+                 * If it was empty, we just need to restore the possible mask and 
+                 * update counts for any newly added possibilities.*/
                 if (wasFilled)
                 {
                     //set cell to empty.
                     cell.Value = Constants.emptyCell;
-                    EmptyCells.Add(cell);
+                    numOfFilledCells--;
 
                     //add 1 to count 
                     UpdateCounts(cell.Row, cell.Col, cell.PossibleMask, 1);
@@ -430,6 +453,7 @@ namespace OmegaSudoku.Core
 
                     if (cell.Value == Constants.emptyCell)
                     {
+                        //if any empty cell is in a failed state, the board is invalid
                         if (cell.Failed())
                             return false;
                     }
@@ -545,6 +569,7 @@ namespace OmegaSudoku.Core
 
             if (!IsValidBoard())
                 throw new InvalidPuzzleException("The provided board is not valid.");
+            numOfFilledCells = clues;
         }
         //call these functions via interface
         void ISudokuBoard.ResetBoard(string boardString)
