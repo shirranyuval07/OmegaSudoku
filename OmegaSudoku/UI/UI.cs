@@ -30,7 +30,6 @@ namespace OmegaSudoku.UI
             Console.WriteLine("4. Put board into file (between 4x4 to 25x25)");
             Console.WriteLine("5. Check 50k hard 9x9 boards.");
             Console.WriteLine("6. Break from the app");
-            Console.WriteLine("7.Test a million easy 9x9 boards");
             Console.WriteLine("C. Clear Console");
             Console.WriteLine("clearfile. to clear the file");
             Console.WriteLine("Enter 'menu' to look at the menu again");
@@ -68,10 +67,6 @@ namespace OmegaSudoku.UI
                             Console.WriteLine("Thank you for using Omega Sudoku Solver");
                             break;
                         }
-                    case "7":
-                        Start1millionEasy();
-                        Console.WriteLine("Welcome back to the menu. Press 'menu' to look at the menu again");
-                        break;
 
                     case "C":
                         Console.Clear();
@@ -89,7 +84,6 @@ namespace OmegaSudoku.UI
                             Console.WriteLine("5. Check 50k hard 9x9 boards.");
                             Console.WriteLine("6. Break from the app");
                             Console.WriteLine("C. Clear Console");
-                            Console.WriteLine("7.Test a million easy 9x9 boards");
                             Console.WriteLine("clearfile. to clear the file");
                             Console.WriteLine("Enter 'menu' to look at the menu again");
                             break;
@@ -219,59 +213,6 @@ namespace OmegaSudoku.UI
 
             totalSw.Stop();
 
-            Console.WriteLine("\nDONE");
-            Console.WriteLine($"Total puzzles solved: {count:N0}");
-            Console.WriteLine($"Total time: {totalSw.Elapsed}");
-            Console.WriteLine($"Average per puzzle: {totalSw.Elapsed.TotalMilliseconds / count:F6} ms");
-        }
-        public static void Start1millionEasy()
-        {
-            Console.WriteLine("Starting to solve 1 million easy 9x9 boards...");
-            List<string> puzzles = new List<string>();
-            List<string> solutions = new List<string>();
-            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            string filePath = Path.Combine(baseDir, "FilesData", "sudoku.csv");
-            using (var reader = new StreamReader(filePath))
-            {
-                while (!reader.EndOfStream)
-                {
-                    var line = reader.ReadLine();
-                    var parts = line.Split(',');
-                    puzzles.Add(parts[0]);
-                    solutions.Add(parts[1]);
-                }
-            }
-            Console.WriteLine($"Loaded {puzzles.Count:N0} puzzles");
-            Console.WriteLine("Starting solve...\n");
-            Console.WriteLine();
-            int count = 0;
-            var totalSw = Stopwatch.StartNew();
-            SudokuBoard board = new SudokuBoard(puzzles[0]);
-            foreach (var puzzle in puzzles)
-            {
-                // Allocate new board each puzzle
-                board.ResetBoard(puzzle);
-                Solver.Solve(board);
-                count++;
-                if (board.ToString() != solutions[count - 1])
-                {
-                    Console.WriteLine("Error: Solution does not match expected solution!");
-                    Console.WriteLine("Puzzle:");
-                    board.PrintBoard();
-                    Console.WriteLine("Expected Solution:");
-                    SudokuBoard expectedBoard = new SudokuBoard(solutions[count - 1]);
-                    expectedBoard.PrintBoard();
-                    break;
-                }
-                // Progress every 100k puzzles
-                if (count % 100000 == 0)
-                {
-                    double elapsedSec = totalSw.Elapsed.TotalSeconds;
-                    double rate = count / elapsedSec;
-                    Console.Write($"Solved {count:N0} | {rate:N0} / sec | Elapsed {elapsedSec:F1}s \r");
-                }
-            }
-            totalSw.Stop();
             Console.WriteLine("\nDONE");
             Console.WriteLine($"Total puzzles solved: {count:N0}");
             Console.WriteLine($"Total time: {totalSw.Elapsed}");
@@ -502,6 +443,7 @@ namespace OmegaSudoku.UI
             }
 
             int n = allCoordinates.Count;
+            //shuffle the cells
             while (n > 1)
             {
                 n--;
@@ -510,7 +452,7 @@ namespace OmegaSudoku.UI
                 allCoordinates[k] = allCoordinates[n];
                 allCoordinates[n] = value;
             }
-
+            //remove the first cellsToRemove cells from the shuffled list
             for (int i = 0; i < cellsToRemove; i++)
             {
                 var coord = allCoordinates[i];

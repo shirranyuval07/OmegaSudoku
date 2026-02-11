@@ -12,6 +12,7 @@ namespace OmegaSudoku.Logic
 {
     static class ConstraintPropagations
     {
+        //instead of creating an instance of queue and visited time i call the FillAffectedSingles i create them once.
         private static Queue<SquareCell> queue = new Queue<SquareCell>();
         private static HashSet<SquareCell> visited = new HashSet<SquareCell>();
         /// <summary>
@@ -36,6 +37,7 @@ namespace OmegaSudoku.Logic
                 progress = false;
 
                 bool foundNaked;
+                //first naked singles
                 do
                 {
                     foundNaked = false;
@@ -54,10 +56,10 @@ namespace OmegaSudoku.Logic
                         }
                     }
                 } while (foundNaked);
-
+                //then hidden singles
                 foreach (SquareCell cell in board.EmptyCells)
                 {
-                    int mask = cell.PossibleMask;
+                    int mask = cell.PossibleMask; // possible values mask
                     bool placedHidden = false;
 
                     while (mask != 0)
@@ -100,21 +102,23 @@ namespace OmegaSudoku.Logic
         {
 
             bool progress = false;
+            //clear the last queue and visisted
             queue.Clear();
             visited.Clear();
 
             // Seed with neighbors of the starting cell
             foreach (SquareCell neighbor in board.board[row*Constants.boardLen+ col].Neighbors)
             {
-                if (neighbor.Value == Constants.emptyCell && visited.Add(neighbor))
+                if (neighbor.Value == Constants.emptyCell && visited.Add(neighbor))//check if it wasnt visited and add
                     queue.Enqueue(neighbor);
             }
 
+            // go over all neighbors that might be affected
             while (queue.Count > 0)
             {
                 SquareCell cell = queue.Dequeue();
 
-                if (cell.Value != Constants.emptyCell) continue;
+                if (cell.Value != Constants.emptyCell) continue;//sanity check
 
                 bool filled = false;
 
@@ -142,7 +146,7 @@ namespace OmegaSudoku.Logic
                         }
                     }
                 }
-
+                //if a cell was filled there might be more affected neighbors of that cell
                 if (filled)
                 {
                     progress = true;

@@ -9,10 +9,10 @@ namespace OmegaSudoku.Utils
 {
     static class Constants
     {
-        public static int boardLen = 9;
-        public static int boxLen = 3;
-        public static string symbols = "123456789";
-        public static char emptyCell = '0';
+        public static int boardLen = 9; //current board len
+        public static int boxLen = 3; // according to the board len,box len
+        public static string symbols = "123456789";//the symbols of the grid so it will be more generic
+        public static char emptyCell = '0';//instead of using a magic number i put it in a variable
 
         // Mappings between characters and their corresponding indices
         public static int[] CharToIndex;
@@ -23,6 +23,7 @@ namespace OmegaSudoku.Utils
         /// </summary>
         public static void SetSymbol()
         {
+            //check board size
             if (boardLen == 4)
             {
                 symbols = "1234";

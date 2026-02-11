@@ -10,7 +10,7 @@ namespace OmegaSudoku.Utils
 {
     static class SudokuHelper
     {
-
+        //useful functions for repeating operations
         public static int LowestBit(int n) => n & -n;
         public static int BitToIndex(int mask)
         {
@@ -35,12 +35,12 @@ namespace OmegaSudoku.Utils
             return BitOperations.PopCount((uint)n);
         }
 
+        //check if the char is part of symbols
         public static void ValidateChar(char value, int boardLen)
         {
-            // 1. Check Empty Cell
+            // Check Empty Cell
             if (value == Constants.emptyCell) return;
-
-            // 2. Check Array Bounds (Prevent IndexOutOfRange for weird characters)
+            // Check Array Bounds (Prevent IndexOutOfRange for weird characters)
             // Constants.CharToIndex is size 128.
             if (value >= Constants.CharToIndex.Length)
             {
@@ -48,10 +48,10 @@ namespace OmegaSudoku.Utils
             }
             int index = Constants.CharToIndex[value];
 
-            // 4. Check Validity
+            //Check Validity
             if (index == -1 || index >= boardLen)
             {
-                if (value == 'Ω') // Specific check you had
+                if (value == 'Ω') //fun check
                     throw new Exceptions.InvalidCharacterException(value);
                 else
                     throw new Exceptions.InvalidCharacterException(value, boardLen);

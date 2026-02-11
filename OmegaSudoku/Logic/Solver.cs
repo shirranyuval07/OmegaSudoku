@@ -12,6 +12,7 @@ namespace OmegaSudoku.Logic
     {
         public static bool Solve(ISudokuBoard board)
         {
+            //stack to keep track of the moves made while backtracking
             Stack<Move> moves = new Stack<Move>();
             return Solves(board, moves);
         }
