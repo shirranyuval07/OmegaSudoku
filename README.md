@@ -33,14 +33,23 @@ The project is a Generic Sudoku Solver. Run by pressing the green arrow. In the 
   Solve sudoku boards, save into text files valid boards, solve saved boards.
 ## Project Structure
   tests
+  
 	OmegaSudoku.Tests.Unit
+	
   OmegaSudoku
+  
 	Core
+	
 	Exceptions
+	
 	FilesData
+	
 	Logic
+	
 	UI
+	
 	Utils
+	
 	program.cs -> run the program from here
   
 ## Author
